@@ -1,0 +1,52 @@
+
+
+# JetBrains
+.idea/
+*.iml
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+.env.docker
+# If you store docker-compose files in repo, remove the above line.
+
+# Logs and runtime files
+*.log
+*.pid
+*.seed
+*.pid.lock
+celerybeat-schedule
+instance/
+*.sock
+
+# Editor backups
+*~
+*.swp
+*.swo
+
+# Node / frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build outputs
+dist/
+tmp/
+temp/
+.cache/
+
+# Secret/credentials created by CI/CD or local tools
+coverage.*
+.venv.lock
+
+# OS-specific
+Icon?
+ehthumbs.db
+.venv
+.env
