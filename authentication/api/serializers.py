@@ -76,6 +76,7 @@ class LoginSerializer(serializers.Serializer):
         except User.DoesNotExist:
             raise serializers.ValidationError("Ungültige Anmeldedaten.")
         
+
         if not user.is_active:
             raise serializers.ValidationError("Dein Account ist noch nicht aktiviert. Bitte prüfe deine E-Mails.")
         
