@@ -2,18 +2,13 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from .serializers import RegistrationSerializer
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 from authentication.models import ActivationToken
-from .serializers import RegistrationSerializer
-
-
+from .serializers import RegistrationSerializer, LoginSerializer
 
 
 @api_view(['POST'])
@@ -134,3 +129,43 @@ def login_view(request):
         return response
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def logout_view(request):
+    """
+    POST /api/logout/
+    Meldet den Benutzer ab, indem der Refresh-Token ungültig gemacht wird.
+    """
+    # Hole Refresh-Token aus Cookie
+    refresh_token = request.COOKIES.get('refresh_token')
+    
+    if not refresh_token:
+        return Response(
+            {'error': 'Refresh-Token fehlt.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        # Setze Token auf Blacklist
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+        
+        # Erstelle Response
+        response = Response(
+            {'detail': 'Logout successful! All tokens will be deleted. Refresh token is now invalid.'},
+            status=status.HTTP_200_OK
+        )
+        
+        # Lösche beide Cookies
+        response.delete_cookie('access_token')
+        response.delete_cookie('refresh_token')
+        
+        return response
+        
+    except TokenError as e:
+        return Response(
+            {'error': 'Ungültiger oder abgelaufener Token.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
