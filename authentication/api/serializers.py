@@ -47,9 +47,42 @@ class RegistrationSerializer(serializers.ModelSerializer):
             is_active=False
         )
 
-        user.activation_token = activation_token
+        
+        activation_token = ActivationToken.objects.create(
+            user=user,
+            token=ActivationToken.generate_token()
+        )
 
+        user.activation_token = activation_token
         # Here you would typically send an activation email containing the token
 
 
         return user
+    
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(
+        required=True, 
+        write_only=True,
+        style={'input_type': 'password'}
+    )
+    
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Ungültige Anmeldedaten.")
+        
+        if not user.is_active:
+            raise serializers.ValidationError("Dein Account ist noch nicht aktiviert. Bitte prüfe deine E-Mails.")
+        
+        user = authenticate(username=user.username, password=password)
+        
+        if user is None:
+            raise serializers.ValidationError("Ungültige Anmeldedaten.")
+        
+        attrs['user'] = user
+        return attrs
