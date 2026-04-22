@@ -169,3 +169,54 @@ def logout_view(request):
             {'error': 'Ungültiger oder abgelaufener Token.'},
             status=status.HTTP_400_BAD_REQUEST
         )
+    
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def refresh_token_view(request):
+    """
+    POST /api/token/refresh/
+    Gibt ein neues Zugangstoken aus, wenn der alte Access-Token abgelaufen ist.
+    """
+    # Hole Refresh-Token aus Cookie
+    refresh_token = request.COOKIES.get('refresh_token')
+    
+    if not refresh_token:
+        return Response(
+            {'error': 'Refresh-Token fehlt.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        # Erstelle RefreshToken-Objekt und validiere
+        refresh = RefreshToken(refresh_token)
+        
+        # Generiere neuen Access-Token
+        access_token = str(refresh.access_token)
+        
+        # Erstelle Response
+        response = Response(
+            {
+                'detail': 'Token refreshed',
+                'access': access_token
+            },
+            status=status.HTTP_200_OK
+        )
+        
+        # Setze neuen Access-Token als Cookie
+        response.set_cookie(
+            key='access_token',
+            value=access_token,
+            httponly=True,
+            secure=False,  # In Production auf True setzen (HTTPS)
+            samesite='Lax',
+            max_age=3600  # 1 Stunde
+        )
+        
+        return response
+        
+    except TokenError as e:
+        return Response(
+            {'error': 'Ungültiger Refresh-Token.'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
