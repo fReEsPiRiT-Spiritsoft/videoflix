@@ -6,10 +6,27 @@ from datetime import timedelta
 
 
 class ActivationToken(models.Model):
-
-    pass
-
-
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='activation_token')
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Aktivierungstoken"
+        verbose_name_plural = "Aktivierungstokens"
+    
+    def __str__(self):
+        return f"Token für {self.user.email}"
+    
+    def is_valid(self):
+        """Token ist 24 Stunden gültig"""
+        expiry_time = self.created_at + timedelta(hours=24)
+        return timezone.now() < expiry_time
+    
+    @staticmethod
+    def generate_token():
+        return secrets.token_urlsafe(32)
+    
+    
 class PasswordResetToken(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_reset_tokens')
     token = models.CharField(max_length=64, unique=True)
