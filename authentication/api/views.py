@@ -43,7 +43,6 @@ def activate_view(request, uidb64, token):
     Aktiviert das Benutzerkonto mithilfe des per E-Mail gesendeten Tokens.
     """
     try:
-        # Dekodiere User-ID
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
@@ -60,7 +59,6 @@ def activate_view(request, uidb64, token):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Prüfe Token-Gültigkeit
     if not activation_token.is_valid():
         activation_token.delete()
         return Response(
@@ -72,7 +70,7 @@ def activate_view(request, uidb64, token):
     if not user.is_active:
         user.is_active = True
         user.save()
-        activation_token.delete()  # Token nach Verwendung löschen
+        activation_token.delete()  
         
         return Response(
             {'message': 'Account successfully activated.'},
@@ -112,7 +110,7 @@ def login_view(request):
             key='access_token',
             value=access_token,
             httponly=True,
-            secure=False,  # In Production auf True setzen (HTTPS)
+            secure=False,  
             samesite='Lax',
             max_age=3600  
         )
@@ -121,7 +119,7 @@ def login_view(request):
             key='refresh_token',
             value=refresh_token,
             httponly=True,
-            secure=False,  # In Production auf True setzen (HTTPS)
+            secure=False, 
             samesite='Lax',
             max_age=604800  
         )
@@ -138,7 +136,6 @@ def logout_view(request):
     POST /api/logout/
     Meldet den Benutzer ab, indem der Refresh-Token ungültig gemacht wird.
     """
-    # Hole Refresh-Token aus Cookie
     refresh_token = request.COOKIES.get('refresh_token')
     
     if not refresh_token:
@@ -148,17 +145,14 @@ def logout_view(request):
         )
     
     try:
-        # Setze Token auf Blacklist
         token = RefreshToken(refresh_token)
         token.blacklist()
         
-        # Erstelle Response
         response = Response(
             {'detail': 'Logout successful! All tokens will be deleted. Refresh token is now invalid.'},
             status=status.HTTP_200_OK
         )
         
-        # Lösche beide Cookies
         response.delete_cookie('access_token')
         response.delete_cookie('refresh_token')
         
@@ -178,7 +172,6 @@ def refresh_token_view(request):
     POST /api/token/refresh/
     Gibt ein neues Zugangstoken aus, wenn der alte Access-Token abgelaufen ist.
     """
-    # Hole Refresh-Token aus Cookie
     refresh_token = request.COOKIES.get('refresh_token')
     
     if not refresh_token:
@@ -188,13 +181,8 @@ def refresh_token_view(request):
         )
     
     try:
-        # Erstelle RefreshToken-Objekt und validiere
         refresh = RefreshToken(refresh_token)
-        
-        # Generiere neuen Access-Token
         access_token = str(refresh.access_token)
-        
-        # Erstelle Response
         response = Response(
             {
                 'detail': 'Token refreshed',
@@ -203,14 +191,13 @@ def refresh_token_view(request):
             status=status.HTTP_200_OK
         )
         
-        # Setze neuen Access-Token als Cookie
         response.set_cookie(
             key='access_token',
             value=access_token,
             httponly=True,
-            secure=False,  # In Production auf True setzen (HTTPS)
+            secure=False,
             samesite='Lax',
-            max_age=3600  # 1 Stunde
+            max_age=3600
         )
         
         return response
