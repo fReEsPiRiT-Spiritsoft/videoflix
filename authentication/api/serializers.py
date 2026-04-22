@@ -87,3 +87,41 @@ class LoginSerializer(serializers.Serializer):
         
         attrs['user'] = user
         return attrs
+    
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    
+    def validate_email(self, value):
+        """Prüft, ob ein User mit dieser E-Mail existiert"""
+        try:
+            user = User.objects.get(email=value)
+            if not user.is_active:
+                raise serializers.ValidationError("Dein Account ist nicht aktiviert.")
+        except User.DoesNotExist:
+            # Aus Sicherheitsgründen keine genaue Fehlermeldung
+            # (verhindert E-Mail-Enumeration)
+            pass
+        return value.lower()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+        validators=[validate_password],
+        style={'input_type': 'password'}
+    )
+    confirmed_password = serializers.CharField(
+        write_only=True,
+        required=True,
+        style={'input_type': 'password'}
+    )
+    
+    def validate(self, attrs):
+        """Prüft, ob die Passwörter übereinstimmen"""
+        if attrs['password'] != attrs['confirmed_password']:
+            raise serializers.ValidationError({
+                "confirmed_password": "Die Passwörter stimmen nicht überein."
+            })
+        return attrs

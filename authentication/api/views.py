@@ -3,13 +3,17 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-from django.utils.http import urlsafe_base64_decode
-from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils.encoding import force_str, force_bytes
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
-from authentication.models import ActivationToken
-from .serializers import RegistrationSerializer, LoginSerializer
-
+from authentication.models import ActivationToken, PasswordResetToken
+from .serializers import (
+    RegistrationSerializer, 
+    LoginSerializer,
+    PasswordResetRequestSerializer,
+    PasswordResetConfirmSerializer
+)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -207,3 +211,104 @@ def refresh_token_view(request):
             {'error': 'Ungültiger Refresh-Token.'},
             status=status.HTTP_401_UNAUTHORIZED
         )
+    
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def password_reset_request_view(request):
+    """
+    POST /api/password_reset/
+    Sendet einen Link zum Zurücksetzen des Passworts an die E-Mail des Benutzers.
+    """
+    serializer = PasswordResetRequestSerializer(data=request.data)
+    
+    if serializer.is_valid():
+        email = serializer.validated_data['email']
+        
+        try:
+            user = User.objects.get(email=email, is_active=True)
+            
+            # Erstelle Reset-Token
+            reset_token = PasswordResetToken.objects.create(
+                user=user,
+                token=PasswordResetToken.generate_token()
+            )
+            
+            # Kodiere User-ID für URL
+            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+            
+            # TODO: E-Mail mit Reset-Link versenden
+            # reset_url = f"http://yourfrontend.com/password-reset/{uidb64}/{reset_token.token}/"
+            # send_password_reset_email(user, reset_url)
+            
+            # Für Entwicklung: Token im Response (NICHT in Production!)
+            print(f"Password Reset URL: /api/password_confirm/{uidb64}/{reset_token.token}/")
+            
+        except User.DoesNotExist:
+            # Aus Sicherheitsgründen keine Fehlermeldung
+            # (verhindert E-Mail-Enumeration)
+            pass
+        
+        # Immer erfolgreiche Response, auch wenn E-Mail nicht existiert
+        return Response(
+            {'detail': 'An email has been sent to reset your password.'},
+            status=status.HTTP_200_OK
+        )
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def password_reset_confirm_view(request, uidb64, token):
+    """
+    POST /api/password_confirm/<uidb64>/<token>/
+    Setzt das Passwort mit dem Token zurück.
+    """
+    serializer = PasswordResetConfirmSerializer(data=request.data)
+    
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Dekodiere User-ID
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        return Response(
+            {'error': 'Invalid password reset link.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Validiere Token
+    try:
+        reset_token = PasswordResetToken.objects.get(user=user, token=token)
+    except PasswordResetToken.DoesNotExist:
+        return Response(
+            {'error': 'Invalid or expired password reset token.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Prüfe Token-Gültigkeit
+    if not reset_token.is_valid():
+        reset_token.delete()
+        return Response(
+            {'error': 'Password reset token has expired.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Setze neues Passwort
+    new_password = serializer.validated_data['password']
+    user.set_password(new_password)
+    user.save()
+    
+    # Markiere Token als verwendet und lösche
+    reset_token.used = True
+    reset_token.save()
+    reset_token.delete()
+    
+    return Response(
+        {'detail': 'Password has been reset successfully.'},
+        status=status.HTTP_200_OK
+    )
