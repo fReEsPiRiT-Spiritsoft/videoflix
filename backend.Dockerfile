@@ -17,6 +17,8 @@ RUN apk update && \
     apk del .build-deps && \
     chmod +x backend.entrypoint.sh
 
+
+
 EXPOSE 8000
 
 ENTRYPOINT [ "./backend.entrypoint.sh" ]

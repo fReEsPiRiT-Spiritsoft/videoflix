@@ -5,6 +5,8 @@ from django.contrib.auth.password_validation import validate_password
 from authentication.models import ActivationToken, PasswordResetToken  # Hier beide Models importieren!
 import secrets
 
+from authentication.utils import send_activation_email
+
 
 class RegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
@@ -53,8 +55,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         )
         user.activation_token_value = activation_token.token
    
-    # TODO: E-Mail mit Aktivierungslink versenden
-    # send_activation_email(user, activation_token.token)
+        send_activation_email(user, activation_token.token)
         return user
     
 class LoginSerializer(serializers.Serializer):

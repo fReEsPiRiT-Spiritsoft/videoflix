@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
-from django.utils.html import format_html
+from django.utils.html import format_html, mark_safe
 from django.utils import timezone
 from .models import ActivationToken, PasswordResetToken
 
@@ -20,13 +20,38 @@ class CustomUserAdmin(BaseUserAdmin):
         'username', 
         'first_name', 
         'last_name', 
-        'is_active',  # Nutze das Standard-Feld direkt
+        'is_active',  # Einfach das Standard-Feld nutzen!
         'is_staff', 
         'date_joined'
     ]
     list_filter = ['is_active', 'is_staff', 'is_superuser', 'date_joined']
     search_fields = ['email', 'username', 'first_name', 'last_name']
     ordering = ['-date_joined']
+    
+    # Wichtig: Explizit erlauben!
+    def has_add_permission(self, request):
+        return True
+    
+    def has_change_permission(self, request, obj=None):
+        return True
+    
+    def has_delete_permission(self, request, obj=None):
+        return True
+    
+    def has_view_permission(self, request, obj=None):
+        return True
+    
+    def get_status_display(self, obj):
+        """Badge für aktiven Status"""
+        if obj.is_active:
+            return format_html(
+                '<span style="color: white; background-color: #28a745; padding: 3px 10px; border-radius: 3px;">✓ Aktiv</span>'
+            )
+        return format_html(
+            '<span style="color: white; background-color: #dc3545; padding: 3px 10px; border-radius: 3px;">✗ Inaktiv</span>'
+        )
+    get_status_display.short_description = 'Status'
+    get_status_display.admin_order_field = 'is_active'
     
     # Custom Actions
     actions = ['activate_users', 'deactivate_users']
@@ -80,10 +105,10 @@ class ActivationTokenAdmin(admin.ModelAdmin):
     def is_valid_badge(self, obj):
         """Badge für gültige/abgelaufene Tokens"""
         if obj.is_valid():
-            return format_html(
+            return mark_safe(
                 '<span style="color: white; background-color: #28a745; padding: 3px 10px; border-radius: 3px;">✓ Gültig</span>'
             )
-        return format_html(
+        return mark_safe(
             '<span style="color: white; background-color: #dc3545; padding: 3px 10px; border-radius: 3px;">✗ Abgelaufen</span>'
         )
     is_valid_badge.short_description = 'Status'
@@ -146,10 +171,10 @@ class PasswordResetTokenAdmin(admin.ModelAdmin):
     def used_badge(self, obj):
         """Badge für verwendete Tokens"""
         if obj.used:
-            return format_html(
+            return mark_safe(
                 '<span style="color: white; background-color: #6c757d; padding: 3px 10px; border-radius: 3px;">Verwendet</span>'
             )
-        return format_html(
+        return mark_safe(
             '<span style="color: white; background-color: #007bff; padding: 3px 10px; border-radius: 3px;">Unbenutzt</span>'
         )
     used_badge.short_description = 'Verwendet'
@@ -157,10 +182,10 @@ class PasswordResetTokenAdmin(admin.ModelAdmin):
     def is_valid_badge(self, obj):
         """Badge für gültige/abgelaufene Tokens"""
         if obj.is_valid():
-            return format_html(
+            return mark_safe(
                 '<span style="color: white; background-color: #28a745; padding: 3px 10px; border-radius: 3px;">✓ Gültig</span>'
             )
-        return format_html(
+        return mark_safe(
             '<span style="color: white; background-color: #dc3545; padding: 3px 10px; border-radius: 3px;">✗ Abgelaufen</span>'
         )
     is_valid_badge.short_description = 'Status'

@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -8,12 +9,14 @@ from django.utils.encoding import force_str, force_bytes
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from authentication.models import ActivationToken, PasswordResetToken
+from authentication.utils import send_password_reset_email
 from .serializers import (
     RegistrationSerializer, 
     LoginSerializer,
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer
 )
+from urllib.parse import unquote
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -43,48 +46,137 @@ def register_view(request):
 @permission_classes([AllowAny])
 def activate_view(request, uidb64, token):
     """
-    GET /api/activate/<uidb64>/<token>/
-    Aktiviert das Benutzerkonto mithilfe des per E-Mail gesendeten Tokens.
+    GET /api/auth/activate/<uidb64>/<token>/
+    Aktiviert das Benutzerkonto und zeigt HTML-Bestätigung.
     """
+    #token = unquote(token)
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-        return Response(
-            {'error': 'Invalid activation link.'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        return HttpResponse("""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Aktivierung fehlgeschlagen</title>
+            <style>
+                body { font-family: Arial; text-align: center; padding: 50px; background: #f5f5f5; }
+                .box { background: white; padding: 30px; border-radius: 10px; max-width: 500px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                .error { color: #dc3545; }
+                h1 { color: #dc3545; }
+            </style>
+        </head>
+        <body>
+            <div class="box">
+                <h1>❌ Aktivierung fehlgeschlagen</h1>
+                <p class="error">Der Aktivierungslink ist ungültig.</p>
+            </div>
+        </body>
+        </html>
+        """, status=400)
     
     try:
         activation_token = ActivationToken.objects.get(user=user, token=token)
     except ActivationToken.DoesNotExist:
-        return Response(
-            {'error': 'Invalid or expired activation token.'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        return HttpResponse("""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Token ungültig</title>
+            <style>
+                body { font-family: Arial; text-align: center; padding: 50px; background: #f5f5f5; }
+                .box { background: white; padding: 30px; border-radius: 10px; max-width: 500px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                .error { color: #dc3545; }
+                h1 { color: #dc3545; }
+            </style>
+        </head>
+        <body>
+            <div class="box">
+                <h1>❌ Token ungültig</h1>
+                <p class="error">Der Aktivierungstoken ist ungültig oder wurde bereits verwendet.</p>
+            </div>
+        </body>
+        </html>
+        """, status=400)
     
     if not activation_token.is_valid():
         activation_token.delete()
-        return Response(
-            {'error': 'Activation token has expired.'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        return HttpResponse("""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Token abgelaufen</title>
+            <style>
+                body { font-family: Arial; text-align: center; padding: 50px; background: #f5f5f5; }
+                .box { background: white; padding: 30px; border-radius: 10px; max-width: 500px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                .error { color: #dc3545; }
+                h1 { color: #dc3545; }
+            </style>
+        </head>
+        <body>
+            <div class="box">
+                <h1>⏰ Token abgelaufen</h1>
+                <p class="error">Der Aktivierungstoken ist abgelaufen (24h Gültigkeit).</p>
+                <p>Bitte registriere dich erneut.</p>
+            </div>
+        </body>
+        </html>
+        """, status=400)
     
     # Aktiviere User
     if not user.is_active:
         user.is_active = True
         user.save()
-        activation_token.delete()  
+        activation_token.delete()
         
-        return Response(
-            {'message': 'Account successfully activated.'},
-            status=status.HTTP_200_OK
-        )
+        return HttpResponse(f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Account aktiviert</title>
+            <style>
+                body {{ font-family: Arial; text-align: center; padding: 50px; background: #f5f5f5; }}
+                .box {{ background: white; padding: 30px; border-radius: 10px; max-width: 500px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+                .success {{ color: #28a745; }}
+                h1 {{ color: #28a745; }}
+                a {{ display: inline-block; margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }}
+                a:hover {{ background: #0056b3; }}
+            </style>
+        </head>
+        <body>
+            <div class="box">
+                <h1>✅ Account erfolgreich aktiviert!</h1>
+                <p class="success">Dein Account <strong>{user.email}</strong> wurde aktiviert.</p>
+                <p>Du kannst dich jetzt einloggen.</p>
+                <a href="http://localhost:5500/login.html">Zum Login</a>
+            </div>
+        </body>
+        </html>
+        """, status=200)
     else:
-        return Response(
-            {'error': 'Account is already active.'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        return HttpResponse("""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Bereits aktiviert</title>
+            <style>
+                body { font-family: Arial; text-align: center; padding: 50px; background: #f5f5f5; }
+                .box { background: white; padding: 30px; border-radius: 10px; max-width: 500px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                .info { color: #007bff; }
+                h1 { color: #007bff; }
+                a { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+                a:hover { background: #0056b3; }
+            </style>
+        </head>
+        <body>
+            <div class="box">
+                <h1>ℹ️ Account bereits aktiv</h1>
+                <p class="info">Dieser Account ist bereits aktiviert.</p>
+                <a href="http://localhost:5500/login.html">Zum Login</a>
+            </div>
+        </body>
+        </html>
+        """, status=400)
     
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -217,10 +309,6 @@ def refresh_token_view(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def password_reset_request_view(request):
-    """
-    POST /api/password_reset/
-    Sendet einen Link zum Zurücksetzen des Passworts an die E-Mail des Benutzers.
-    """
     serializer = PasswordResetRequestSerializer(data=request.data)
     
     if serializer.is_valid():
@@ -235,22 +323,12 @@ def password_reset_request_view(request):
                 token=PasswordResetToken.generate_token()
             )
             
-            # Kodiere User-ID für URL
-            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-            
-            # TODO: E-Mail mit Reset-Link versenden
-            # reset_url = f"http://yourfrontend.com/password-reset/{uidb64}/{reset_token.token}/"
-            # send_password_reset_email(user, reset_url)
-            
-            # Für Entwicklung: Token im Response (NICHT in Production!)
-            print(f"Password Reset URL: /api/password_confirm/{uidb64}/{reset_token.token}/")
+            # Sende E-Mail
+            send_password_reset_email(user, reset_token.token)
             
         except User.DoesNotExist:
-            # Aus Sicherheitsgründen keine Fehlermeldung
-            # (verhindert E-Mail-Enumeration)
-            pass
+            pass  # Keine Fehlermeldung aus Sicherheitsgründen
         
-        # Immer erfolgreiche Response, auch wenn E-Mail nicht existiert
         return Response(
             {'detail': 'An email has been sent to reset your password.'},
             status=status.HTTP_200_OK
