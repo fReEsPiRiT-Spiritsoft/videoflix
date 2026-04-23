@@ -1,11 +1,18 @@
 from rest_framework import serializers
-from content.models import Video, Category
+from content.models import Video, Category, VideoResolution
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name', 'slug']
+
+
+class VideoResolutionSerializer(serializers.ModelSerializer):
+    """Serializer für verfügbare Auflösungen"""
+    class Meta:
+        model = VideoResolution
+        fields = ['resolution', 'is_ready', 'file_size']
 
 
 class VideoListSerializer(serializers.ModelSerializer):
@@ -25,7 +32,6 @@ class VideoListSerializer(serializers.ModelSerializer):
         ]
     
     def get_thumbnail_url(self, obj):
-        """Gibt die vollständige URL des Thumbnails zurück"""
         if obj.thumbnail:
             request = self.context.get('request')
             if request:
@@ -39,6 +45,7 @@ class VideoDetailSerializer(serializers.ModelSerializer):
     thumbnail_url = serializers.SerializerMethodField()
     category = CategorySerializer(read_only=True)
     uploaded_by = serializers.CharField(source='uploaded_by.username', read_only=True)
+    available_resolutions = VideoResolutionSerializer(source='resolutions', many=True, read_only=True)
     
     class Meta:
         model = Video
@@ -53,11 +60,12 @@ class VideoDetailSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
             'duration',
-            'views'
+            'views',
+            'is_processed',
+            'available_resolutions'
         ]
     
     def get_thumbnail_url(self, obj):
-        """Gibt die vollständige URL des Thumbnails zurück"""
         if obj.thumbnail:
             request = self.context.get('request')
             if request:

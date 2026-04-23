@@ -20,27 +20,13 @@ class CustomUserAdmin(BaseUserAdmin):
         'username', 
         'first_name', 
         'last_name', 
-        'is_active_badge', 
+        'is_active',  # Nutze das Standard-Feld direkt
         'is_staff', 
         'date_joined'
     ]
     list_filter = ['is_active', 'is_staff', 'is_superuser', 'date_joined']
     search_fields = ['email', 'username', 'first_name', 'last_name']
     ordering = ['-date_joined']
-    
-    # Keine zusätzlichen Felder nötig - BaseUserAdmin hat bereits alle wichtigen
-    # fieldsets können bei Bedarf komplett überschrieben werden
-    
-    def is_active_badge(self, obj):
-        """Badge für aktive/inaktive Benutzer"""
-        if obj.is_active:
-            return format_html(
-                '<span style="color: white; background-color: #28a745; padding: 3px 10px; border-radius: 3px;">✓ Aktiv</span>'
-            )
-        return format_html(
-            '<span style="color: white; background-color: #dc3545; padding: 3px 10px; border-radius: 3px;">✗ Inaktiv</span>'
-        )
-    is_active_badge.short_description = 'Status'
     
     # Custom Actions
     actions = ['activate_users', 'deactivate_users']
@@ -56,7 +42,6 @@ class CustomUserAdmin(BaseUserAdmin):
         updated = queryset.update(is_active=False)
         self.message_user(request, f'{updated} Benutzer wurden deaktiviert.')
     deactivate_users.short_description = "Ausgewählte Benutzer deaktivieren"
-
 
 @admin.register(ActivationToken)
 class ActivationTokenAdmin(admin.ModelAdmin):
@@ -186,7 +171,7 @@ class PasswordResetTokenAdmin(admin.ModelAdmin):
     is_valid_display.short_description = 'Ist gültig'
     is_valid_display.boolean = True
     
-    # Custom Actions
+  
     actions = ['delete_expired_tokens', 'delete_used_tokens']
     
     def delete_expired_tokens(self, request, queryset):
@@ -207,7 +192,6 @@ class PasswordResetTokenAdmin(admin.ModelAdmin):
     delete_used_tokens.short_description = "Verwendete Tokens löschen"
 
 
-# Customize Admin Site
 admin.site.site_header = "Videoflix Administration" + "\u00A0" * 65 + "by Patrick Schmidt"
 admin.site.site_title = "Videoflix Admin"
 admin.site.index_title = "Videoflix Admin-Panel"

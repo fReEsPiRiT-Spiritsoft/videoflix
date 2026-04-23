@@ -32,7 +32,7 @@ def register_view(request):
                 'id': user.id,
                 'email': user.email
             },
-            'token': user.activation_token
+            'token': user.activation_token_value
         }, status=status.HTTP_201_CREATED)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

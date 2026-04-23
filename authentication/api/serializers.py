@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
+from authentication.models import ActivationToken, PasswordResetToken  # Hier beide Models importieren!
 import secrets
 
 
@@ -38,8 +40,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         validated_data.pop('confirmed_password')
-        activation_token = secrets.token_urlsafe(32)
-
         user = User.objects.create_user(
             username=validated_data['email'],
             email=validated_data['email'],
@@ -47,16 +47,14 @@ class RegistrationSerializer(serializers.ModelSerializer):
             is_active=False
         )
 
-        
         activation_token = ActivationToken.objects.create(
             user=user,
             token=ActivationToken.generate_token()
         )
-
-        user.activation_token = activation_token
-        # Here you would typically send an activation email containing the token
-
-
+        user.activation_token_value = activation_token.token
+   
+    # TODO: E-Mail mit Aktivierungslink versenden
+    # send_activation_email(user, activation_token.token)
         return user
     
 class LoginSerializer(serializers.Serializer):
