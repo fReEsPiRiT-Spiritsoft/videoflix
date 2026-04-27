@@ -6,6 +6,7 @@ HLS (HTTP Live Streaming) format with multiple resolution variants.
 
 import os
 import subprocess
+import json
 from pathlib import Path
 from django.conf import settings
 from content.models import Video, VideoResolution
@@ -22,6 +23,95 @@ def get_video_resolutions():
         ('720p', 1280, 720, '2500k'),
         ('1080p', 1920, 1080, '5000k'),
     ]
+
+
+def get_video_duration(input_path):
+    """Get video duration in seconds using ffprobe.
+    
+    Args:
+        input_path: Path to video file.
+        
+    Returns:
+        float: Duration in seconds, or None if error.
+    """
+    cmd = ['ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+           '-of', 'json', input_path]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode == 0:
+        try:
+            data = json.loads(result.stdout)
+            return float(data['format']['duration'])
+        except (json.JSONDecodeError, KeyError) as e:
+            print(f"  x Error parsing duration: {e}")
+            return None
+    print(f"  x ffprobe error: {result.stderr}")
+    return None
+
+
+def get_thumbnail_path(video_id):
+    """Build thumbnail file path with year/month directory structure.
+    
+    Args:
+        video_id: ID of the video.
+        
+    Returns:
+        str: Full path to thumbnail file.
+    """
+    from datetime import datetime
+    now = datetime.now()
+    thumb_dir = os.path.join(settings.MEDIA_ROOT, 'thumbnails', 
+                             str(now.year), f'{now.month:02d}')
+    os.makedirs(thumb_dir, exist_ok=True)
+    return os.path.join(thumb_dir, f'{video_id}.jpg')
+
+
+def generate_thumbnail(video_id, input_path):
+    """Generate thumbnail from middle of video.
+    
+    Args:
+        video_id: ID of the video.
+        input_path: Path to input video file.
+        
+    Returns:
+        str: Path to generated thumbnail, or None if error.
+    """
+    print(f"    -> Getting video duration...")
+    duration = get_video_duration(input_path)
+    if not duration:
+        print(f"    x Failed to get video duration")
+        return None
+    
+    timestamp = duration / 2
+    print(f"    -> Extracting frame at {timestamp:.1f}s...")
+    thumbnail_path = get_thumbnail_path(video_id)
+    cmd = ['ffmpeg', '-ss', str(timestamp), '-i', input_path, '-vframes', '1',
+           '-vf', 'scale=1280:720:force_original_aspect_ratio=decrease',
+           '-q:v', '2', thumbnail_path, '-y']
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    if result.returncode != 0:
+        print(f"    x FFmpeg error: {result.stderr[:200]}")
+        return None
+    
+    print(f"    + Thumbnail created at {thumbnail_path}")
+    return thumbnail_path
+
+
+def save_thumbnail_to_video(video, thumbnail_path):
+    """Save generated thumbnail to Video model.
+    
+    Args:
+        video: Video instance to update.
+        thumbnail_path: Path to thumbnail file.
+    """
+    if not thumbnail_path or not os.path.exists(thumbnail_path):
+        print(f"    x Thumbnail file not found: {thumbnail_path}")
+        return
+    
+    relative_path = os.path.relpath(thumbnail_path, settings.MEDIA_ROOT)
+    video.thumbnail = relative_path
+    video.save(update_fields=['thumbnail'])
+    print(f"    + Thumbnail saved to DB: {relative_path}")
 
 
 def create_hls_directory(video_id):
@@ -164,9 +254,22 @@ def process_video(video_id):
             return
         
         input_path = video.video_file.path
-        hls_base_dir = create_hls_directory(video.id)
         print(f"Processing video: {video.title} ({video_id})")
+        print(f"  Input path: {input_path}")
         
+        # Generate thumbnail first for faster user feedback
+        print("  -> Generating thumbnail...")
+        try:
+            thumbnail_path = generate_thumbnail(video.id, input_path)
+            if thumbnail_path:
+                save_thumbnail_to_video(video, thumbnail_path)
+            else:
+                print("    x Thumbnail generation failed")
+        except Exception as e:
+            print(f"    x Thumbnail error: {str(e)}")
+        
+        # Process HLS resolutions
+        hls_base_dir = create_hls_directory(video.id)
         process_all_resolutions(video, input_path, hls_base_dir)
         
         video.is_processed = True
