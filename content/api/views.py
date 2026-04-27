@@ -1,3 +1,9 @@
+"""API views for video content endpoints.
+
+This module provides RESTful API endpoints for video listing, details,
+and HLS streaming (playlists and segments).
+"""
+
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -27,9 +33,15 @@ import os
 @authentication_classes([CookieJWTAuthentication]) 
 @permission_classes([IsAuthenticated])
 def video_list_view(request):
-    """
-    GET /api/video/
-    Gibt eine Liste aller verfügbaren Videos zurück.
+    """Get list of all available videos.
+    
+    Returns a list of public, processed videos with basic information.
+    
+    Args:
+        request: HTTP request with authentication.
+        
+    Returns:
+        Response: 200 with video list, 401 if not authenticated.
     """
     user, error_response = check_video_authentication(request)
     if error_response:
@@ -43,9 +55,17 @@ def video_list_view(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def video_detail_view(request, pk):
-    """
-    GET /api/video/<id>/
-    Gibt Details zu einem Video zurück.
+    """Get detailed information about a specific video.
+    
+    Increments view count and returns full video details including
+    available resolutions.
+    
+    Args:
+        request: HTTP request with authentication.
+        pk: Video primary key.
+        
+    Returns:
+        Response: 200 with video details, 404 if not found.
     """
     user, error_response = check_video_authentication(request)
     if error_response:
@@ -54,7 +74,7 @@ def video_detail_view(request, pk):
     try:
         video = Video.objects.select_related('category', 'uploaded_by').get(pk=pk, is_public=True)
     except Video.DoesNotExist:
-        return Response({'error': 'Video nicht gefunden.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Video not found.'}, status=status.HTTP_404_NOT_FOUND)
     
     video.views += 1
     video.save(update_fields=['views'])
@@ -65,9 +85,17 @@ def video_detail_view(request, pk):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def video_hls_playlist_view(request, movie_id, resolution):
-    """
-    GET /api/video/<movie_id>/<resolution>/index.m3u8
-    Gibt die HLS-Playlist zurück.
+    """Serve HLS playlist for a specific video and resolution.
+    
+    Returns the M3U8 playlist file for adaptive streaming.
+    
+    Args:
+        request: HTTP request with authentication.
+        movie_id: Video ID.
+        resolution: Desired resolution (480p/720p/1080p).
+        
+    Returns:
+        HttpResponse: M3U8 playlist content.
     """
     user, error_response = check_video_authentication(request)
     if error_response:
@@ -87,16 +115,25 @@ def video_hls_playlist_view(request, movie_id, resolution):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def video_hls_segment_view(request, movie_id, resolution, segment):
-    """
-    GET /api/video/<movie_id>/<resolution>/<segment>/
-    Gibt ein HLS-Videosegment zurück.
+    """Serve HLS video segment.
+    
+    Returns individual transport stream segments for HLS playback.
+    
+    Args:
+        request: HTTP request with authentication.
+        movie_id: Video ID.
+        resolution: Video resolution.
+        segment: Segment filename.
+        
+    Returns:
+        FileResponse: Video segment with caching headers.
     """
     user, error_response = check_video_authentication(request)
     if error_response:
         return error_response
     
     if not validate_segment_filename(segment):
-        return Response({'error': 'Ungültiger Segment-Name.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Invalid segment name.'}, status=status.HTTP_400_BAD_REQUEST)
     
     video, video_resolution, error_response = validate_and_get_video_resolution(movie_id, resolution)
     if error_response:
@@ -104,10 +141,10 @@ def video_hls_segment_view(request, movie_id, resolution, segment):
     
     segment_path = get_segment_path(movie_id, resolution, segment)
     if not os.path.exists(segment_path):
-        return Response({'error': 'Segment nicht gefunden.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Segment not found.'}, status=status.HTTP_404_NOT_FOUND)
     
     try:
         return create_segment_response(segment_path)
     except Exception:
-        return Response({'error': 'Fehler beim Laden des Segments.'}, 
+        return Response({'error': 'Error loading segment.'}, 
                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)

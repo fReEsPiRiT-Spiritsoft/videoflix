@@ -81,7 +81,12 @@ class Video(models.Model):
 
 
 class VideoResolution(models.Model):
-    """Speichert verschiedene Auflösungen eines Videos"""
+    """Video resolution variant model for adaptive streaming.
+    
+    Stores different quality variants of a video for HLS adaptive bitrate
+    streaming (480p, 720p, 1080p).
+    """
+    
     RESOLUTION_CHOICES = [
         ('480p', '480p'),
         ('720p', '720p'),
@@ -91,13 +96,13 @@ class VideoResolution(models.Model):
     video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='resolutions')
     resolution = models.CharField(max_length=10, choices=RESOLUTION_CHOICES)
     hls_playlist = models.FileField(upload_to='videos/hls/', blank=True, null=True)
-    file_size = models.BigIntegerField(default=0, help_text="Dateigröße in Bytes")
+    file_size = models.BigIntegerField(default=0, help_text="File size in bytes")
     is_ready = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        verbose_name = "Video-Auflösung"
-        verbose_name_plural = "Video-Auflösungen"
+        verbose_name = "Video Resolution"
+        verbose_name_plural = "Video Resolutions"
         unique_together = ['video', 'resolution']
     
     def __str__(self):

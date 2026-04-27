@@ -1,3 +1,9 @@
+"""Background tasks for video processing and HLS conversion.
+
+This module provides Django RQ tasks for converting uploaded videos into
+HLS (HTTP Live Streaming) format with multiple resolution variants.
+"""
+
 import os
 import subprocess
 from pathlib import Path
@@ -6,8 +12,10 @@ from content.models import Video, VideoResolution
 
 
 def get_video_resolutions():
-    """
-    Gibt die unterstützten Video-Auflösungen zurück.
+    """Get supported video resolution configurations.
+    
+    Returns:
+        list: Tuples of (resolution_name, scale, bitrate) for each quality level.
     """
     return [
         ('480p', '854:480', '1000k'),
@@ -17,8 +25,13 @@ def get_video_resolutions():
 
 
 def create_hls_directory(video_id):
-    """
-    Erstellt das HLS-Basisverzeichnis.
+    """Create HLS base directory for a video.
+    
+    Args:
+        video_id: ID of the video to create directory for.
+        
+    Returns:
+        str: Path to created HLS directory.
     """
     hls_base_dir = os.path.join(settings.MEDIA_ROOT, 'videos', 'hls', str(video_id))
     os.makedirs(hls_base_dir, exist_ok=True)
@@ -26,8 +39,16 @@ def create_hls_directory(video_id):
 
 
 def build_ffmpeg_command(input_path, output_dir, scale, bitrate):
-    """
-    Erstellt den FFmpeg-Befehl für HLS-Konvertierung.
+    """Build FFmpeg command for HLS conversion.
+    
+    Args:
+        input_path: Path to input video file.
+        output_dir: Directory for output HLS files.
+        scale: Video scale parameter (e.g., '1280:720').
+        bitrate: Video bitrate (e.g., '2500k').
+        
+    Returns:
+        list: FFmpeg command arguments.
     """
     output_playlist = os.path.join(output_dir, 'index.m3u8')
     return [
@@ -42,26 +63,38 @@ def build_ffmpeg_command(input_path, output_dir, scale, bitrate):
 
 
 def convert_video_resolution(input_path, output_dir, res_name, scale, bitrate):
-    """
-    Konvertiert ein Video in eine bestimmte Auflösung.
+    """Convert video to a specific resolution using FFmpeg.
+    
+    Args:
+        input_path: Path to input video file.
+        output_dir: Directory for output HLS files.
+        res_name: Resolution name (e.g., '720p').
+        scale: Video scale parameter.
+        bitrate: Video bitrate.
+        
+    Returns:
+        bool: True if conversion succeeded, False otherwise.
     """
     os.makedirs(output_dir, exist_ok=True)
     cmd = build_ffmpeg_command(input_path, output_dir, scale, bitrate)
     
-    print(f"  → Erstelle {res_name}...")
+    print(f"  -> Creating {res_name}...")
     result = subprocess.run(cmd, capture_output=True, text=True)
     
     if result.returncode != 0:
-        print(f"  ✗ Fehler bei {res_name}: {result.stderr}")
+        print(f"  x Error with {res_name}: {result.stderr}")
         return False
     
-    print(f"  ✓ {res_name} erstellt!")
+    print(f"  + {res_name} created!")
     return True
 
 
 def save_video_resolution(video, res_name):
-    """
-    Speichert die VideoResolution in der Datenbank.
+    """Save VideoResolution entry to database.
+    
+    Args:
+        video: Video instance to save resolution for.
+        res_name: Resolution name (e.g., '720p').
     """
     VideoResolution.objects.update_or_create(
         video=video,
@@ -74,8 +107,12 @@ def save_video_resolution(video, res_name):
 
 
 def process_all_resolutions(video, input_path, hls_base_dir):
-    """
-    Verarbeitet alle Auflösungen für ein Video.
+    """Process all resolution variants for a video.
+    
+    Args:
+        video: Video instance to process.
+        input_path: Path to input video file.
+        hls_base_dir: Base directory for HLS output.
     """
     for res_name, scale, bitrate in get_video_resolutions():
         output_dir = os.path.join(hls_base_dir, res_name)
@@ -85,26 +122,31 @@ def process_all_resolutions(video, input_path, hls_base_dir):
 
 
 def process_video(video_id):
-    """
-    Konvertiert ein Video zu HLS in 480p, 720p, 1080p
+    """Convert a video to HLS format with 480p, 720p, and 1080p resolutions.
+    
+    Main entry point for video processing background task. Converts the
+    uploaded video into HLS format with multiple quality levels.
+    
+    Args:
+        video_id: ID of the video to process.
     """
     try:
         video = Video.objects.get(id=video_id)
         if not video.video_file:
-            print(f"Video {video_id} hat keine Datei")
+            print(f"Video {video_id} has no file")
             return
         
         input_path = video.video_file.path
         hls_base_dir = create_hls_directory(video.id)
-        print(f"Verarbeite Video: {video.title} ({video_id})")
+        print(f"Processing video: {video.title} ({video_id})")
         
         process_all_resolutions(video, input_path, hls_base_dir)
         
         video.is_processed = True
         video.save()
-        print(f" Video {video.title} erfolgreich verarbeitet!")
+        print(f" Video {video.title} processed successfully!")
         
     except Video.DoesNotExist:
-        print(f"Video {video_id} nicht gefunden")
+        print(f"Video {video_id} not found")
     except Exception as e:
-        print(f"Fehler beim Verarbeiten von Video {video_id}: {str(e)}")
+        print(f"Error processing video {video_id}: {str(e)}")
