@@ -70,6 +70,7 @@ class VideoDetailSerializer(serializers.ModelSerializer):
     """
     
     thumbnail_url = serializers.SerializerMethodField()
+    master_playlist_url = serializers.SerializerMethodField()
     category = CategorySerializer(read_only=True)
     uploaded_by = serializers.CharField(source='uploaded_by.username', read_only=True)
     available_resolutions = VideoResolutionSerializer(source='resolutions', many=True, read_only=True)
@@ -82,6 +83,7 @@ class VideoDetailSerializer(serializers.ModelSerializer):
             'description',
             'video_file',
             'thumbnail_url',
+            'master_playlist_url',
             'category',
             'uploaded_by',
             'created_at',
@@ -106,4 +108,23 @@ class VideoDetailSerializer(serializers.ModelSerializer):
             if request:
                 return request.build_absolute_uri(obj.thumbnail.url)
             return obj.thumbnail.url
+        return None
+    
+    def get_master_playlist_url(self, obj):
+        """Get absolute URL to HLS master playlist for adaptive streaming.
+        
+        Args:
+            obj: Video instance.
+            
+        Returns:
+            str: Absolute URL to master.m3u8 or None if not processed.
+        """
+        if not obj.is_processed:
+            return None
+        
+        request = self.context.get('request')
+        if request:
+            from django.urls import reverse
+            path = reverse('content_api:video_hls_master_playlist', kwargs={'movie_id': obj.id})
+            return request.build_absolute_uri(path)
         return None

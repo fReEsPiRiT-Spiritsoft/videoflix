@@ -18,6 +18,7 @@ from content.functions import (
     validate_segment_filename,
     get_video_by_id,
     get_video_resolution,
+    get_master_playlist_path,
     get_playlist_path,
     get_segment_path,
     read_playlist_file,
@@ -84,10 +85,46 @@ def video_detail_view(request, pk):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+def video_hls_master_playlist_view(request, movie_id):
+    """Serve HLS master playlist for adaptive bitrate streaming.
+    
+    Returns the master M3U8 playlist that references all available resolutions.
+    The player automatically selects the best quality based on bandwidth.
+    
+    Args:
+        request: HTTP request with authentication.
+        movie_id: Video ID.
+        
+    Returns:
+        HttpResponse: Master M3U8 playlist content.
+    """
+    user, error_response = check_video_authentication(request)
+    if error_response:
+        return error_response
+    
+    video = get_video_by_id(movie_id)
+    if not video:
+        return Response({'error': 'Video not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    master_playlist_path = get_master_playlist_path(movie_id)
+    if not os.path.exists(master_playlist_path):
+        return Response({'error': 'Master playlist not found.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    master_content = read_playlist_file(master_playlist_path)
+    if not master_content:
+        return Response({'error': 'Error loading master playlist.'}, 
+                       status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    return HttpResponse(master_content, content_type='application/vnd.apple.mpegurl')
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def video_hls_playlist_view(request, movie_id, resolution):
     """Serve HLS playlist for a specific video and resolution.
     
-    Returns the M3U8 playlist file for adaptive streaming.
+    Returns the M3U8 playlist file for a specific quality level.
+    This is typically called by the master playlist for ABR streaming.
     
     Args:
         request: HTTP request with authentication.

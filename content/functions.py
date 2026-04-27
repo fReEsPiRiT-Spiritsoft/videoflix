@@ -100,6 +100,18 @@ def get_video_resolution(video, resolution):
         return None
 
 
+def get_master_playlist_path(movie_id):
+    """Generate path to HLS master playlist file.
+    
+    Args:
+        movie_id: Video ID.
+        
+    Returns:
+        str: Absolute path to master playlist file.
+    """
+    return os.path.join(settings.MEDIA_ROOT, 'videos', 'hls', str(movie_id), 'master.m3u8')
+
+
 def get_playlist_path(movie_id, resolution):
     """Generate path to HLS playlist file.
     

@@ -15,12 +15,12 @@ def get_video_resolutions():
     """Get supported video resolution configurations.
     
     Returns:
-        list: Tuples of (resolution_name, scale, bitrate) for each quality level.
+        list: Tuples of (resolution_name, width, height, bitrate) for each quality level.
     """
     return [
-        ('480p', '854:480', '1000k'),
-        ('720p', '1280:720', '2500k'),
-        ('1080p', '1920:1080', '5000k'),
+        ('480p', 854, 480, '1000k'),
+        ('720p', 1280, 720, '2500k'),
+        ('1080p', 1920, 1080, '5000k'),
     ]
 
 
@@ -38,13 +38,14 @@ def create_hls_directory(video_id):
     return hls_base_dir
 
 
-def build_ffmpeg_command(input_path, output_dir, scale, bitrate):
+def build_ffmpeg_command(input_path, output_dir, width, height, bitrate):
     """Build FFmpeg command for HLS conversion.
     
     Args:
         input_path: Path to input video file.
         output_dir: Directory for output HLS files.
-        scale: Video scale parameter (e.g., '1280:720').
+        width: Video width in pixels.
+        height: Video height in pixels.
         bitrate: Video bitrate (e.g., '2500k').
         
     Returns:
@@ -53,7 +54,7 @@ def build_ffmpeg_command(input_path, output_dir, scale, bitrate):
     output_playlist = os.path.join(output_dir, 'index.m3u8')
     return [
         'ffmpeg', '-i', input_path,
-        '-vf', f'scale={scale}',
+        '-vf', f'scale={width}:{height}',
         '-c:v', 'libx264', '-b:v', bitrate,
         '-c:a', 'aac', '-b:a', '128k',
         '-hls_time', '10', '-hls_playlist_type', 'vod',
@@ -62,21 +63,22 @@ def build_ffmpeg_command(input_path, output_dir, scale, bitrate):
     ]
 
 
-def convert_video_resolution(input_path, output_dir, res_name, scale, bitrate):
+def convert_video_resolution(input_path, output_dir, res_name, width, height, bitrate):
     """Convert video to a specific resolution using FFmpeg.
     
     Args:
         input_path: Path to input video file.
         output_dir: Directory for output HLS files.
         res_name: Resolution name (e.g., '720p').
-        scale: Video scale parameter.
+        width: Video width in pixels.
+        height: Video height in pixels.
         bitrate: Video bitrate.
         
     Returns:
         bool: True if conversion succeeded, False otherwise.
     """
     os.makedirs(output_dir, exist_ok=True)
-    cmd = build_ffmpeg_command(input_path, output_dir, scale, bitrate)
+    cmd = build_ffmpeg_command(input_path, output_dir, width, height, bitrate)
     
     print(f"  -> Creating {res_name}...")
     result = subprocess.run(cmd, capture_output=True, text=True)
@@ -106,6 +108,29 @@ def save_video_resolution(video, res_name):
     )
 
 
+def create_master_playlist(hls_base_dir):
+    """Create HLS master playlist for adaptive bitrate streaming.
+    
+    Generates a master.m3u8 file that references all available resolutions,
+    enabling automatic quality switching based on bandwidth.
+    
+    Args:
+        hls_base_dir: Base directory for HLS files.
+    """
+    master_playlist_path = os.path.join(hls_base_dir, 'master.m3u8')
+    
+    with open(master_playlist_path, 'w') as f:
+        f.write('#EXTM3U\n')
+        f.write('#EXT-X-VERSION:3\n\n')
+        
+        for res_name, width, height, bitrate in get_video_resolutions():
+            bandwidth = int(bitrate.replace('k', '000')) + 128000
+            f.write(f'#EXT-X-STREAM-INF:BANDWIDTH={bandwidth},RESOLUTION={width}x{height}\n')
+            f.write(f'{res_name}/index.m3u8\n\n')
+    
+    print("  + Master playlist created for adaptive bitrate streaming!")
+
+
 def process_all_resolutions(video, input_path, hls_base_dir):
     """Process all resolution variants for a video.
     
@@ -114,11 +139,13 @@ def process_all_resolutions(video, input_path, hls_base_dir):
         input_path: Path to input video file.
         hls_base_dir: Base directory for HLS output.
     """
-    for res_name, scale, bitrate in get_video_resolutions():
+    for res_name, width, height, bitrate in get_video_resolutions():
         output_dir = os.path.join(hls_base_dir, res_name)
-        success = convert_video_resolution(input_path, output_dir, res_name, scale, bitrate)
+        success = convert_video_resolution(input_path, output_dir, res_name, width, height, bitrate)
         if success:
             save_video_resolution(video, res_name)
+    
+    create_master_playlist(hls_base_dir)
 
 
 def process_video(video_id):
