@@ -19,22 +19,21 @@ class CookieJWTAuthentication(JWTAuthentication):
     
     def authenticate(self, request):
         """Authenticate the request using JWT token from cookies.
-        
+
         Args:
             request: The HTTP request object containing cookies.
-            
+
         Returns:
             tuple: (user, validated_token) if authentication succeeds.
             None: If no token is found or authentication fails.
         """
         access_token = request.COOKIES.get('access_token')
-        
+
         if access_token is None:
             return None
-        
-        validated_token = self.get_validated_token(access_token)
-        
+
         try:
+            validated_token = self.get_validated_token(access_token)
             return self.get_user(validated_token), validated_token
-        except InvalidToken:
+        except Exception:
             return None
