@@ -1,0 +1,13 @@
+Hallo {{ user_email }},
+
+vielen Dank für deine Registrierung bei Videoflix!
+
+Bitte aktiviere deinen Account unter folgendem Link:
+{{ activation_link }}
+
+Der Link ist 24 Stunden gültig.
+
+Falls du dich nicht registriert hast, ignoriere diese E-Mail.
+
+Viele Grüße
+Dein Videoflix-Team
