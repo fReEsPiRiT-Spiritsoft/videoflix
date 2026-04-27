@@ -1,14 +1,32 @@
+"""Serializers for user authentication API endpoints.
+
+This module provides DRF serializers for user registration, login, and
+password reset operations with validation and error handling.
+"""
+
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from authentication.models import ActivationToken, PasswordResetToken  # Hier beide Models importieren!
+from authentication.models import ActivationToken, PasswordResetToken
 import secrets
 
 from authentication.utils import send_activation_email
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
+    """Serializer for user registration with email verification.
+    
+    Handles user account creation with password validation and sends
+    activation email with token for email verification.
+    
+    Fields:
+        email: User's email address (required, unique).
+        password: User's password (write-only, validated).
+        confirmed_password: Password confirmation (write-only).
+        token: Activation token (read-only, auto-generated).
+    """
+    
     password = serializers.CharField(
         write_only=True,
         required=True,
@@ -29,18 +47,47 @@ class RegistrationSerializer(serializers.ModelSerializer):
             'email': {'required': True},
         }
 
-
     def validate_email(self, value):
+        """Validate that email is not already registered.
+        
+        Args:
+            value: Email address to validate.
+            
+        Returns:
+            str: Lowercase email address.
+            
+        Raises:
+            ValidationError: If email is already registered.
+        """
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("A user with this email already exists.")
         return value.lower()
     
     def validate(self, attrs):
+        """Validate that passwords match.
+        
+        Args:
+            attrs: Dictionary of field values.
+            
+        Returns:
+            dict: Validated attributes.
+            
+        Raises:
+            ValidationError: If passwords don't match.
+        """
         if attrs['password'] != attrs['confirmed_password']:
             raise serializers.ValidationError("Password and confirmed password do not match.")
         return attrs
     
     def create(self, validated_data):
+        """Create inactive user and send activation email.
+        
+        Args:
+            validated_data: Validated serializer data.
+            
+        Returns:
+            User: Created user object with activation token.
+        """
         validated_data.pop('confirmed_password')
         user = User.objects.create_user(
             username=validated_data['email'],
@@ -57,8 +104,18 @@ class RegistrationSerializer(serializers.ModelSerializer):
    
         send_activation_email(user, activation_token.token)
         return user
-    
+
+
 class LoginSerializer(serializers.Serializer):
+    """Serializer for user login authentication.
+    
+    Validates user credentials and checks account activation status.
+    
+    Fields:
+        email: User's email address (required).
+        password: User's password (write-only, required).
+    """
+    
     email = serializers.EmailField(required=True)
     password = serializers.CharField(
         required=True, 
@@ -67,44 +124,86 @@ class LoginSerializer(serializers.Serializer):
     )
     
     def validate(self, attrs):
+        """Validate credentials and account activation status.
+        
+        Args:
+            attrs: Dictionary containing email and password.
+            
+        Returns:
+            dict: Validated attributes with user object.
+            
+        Raises:
+            ValidationError: If credentials invalid or account not activated.
+        """
         email = attrs.get('email')
         password = attrs.get('password')
         
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError("Ungültige Anmeldedaten.")
+            raise serializers.ValidationError("Invalid credentials.")
         
-
         if not user.is_active:
-            raise serializers.ValidationError("Dein Account ist noch nicht aktiviert. Bitte prüfe deine E-Mails.")
+            raise serializers.ValidationError(
+                "Your account is not yet activated. Please check your email."
+            )
         
         user = authenticate(username=user.username, password=password)
         
         if user is None:
-            raise serializers.ValidationError("Ungültige Anmeldedaten.")
+            raise serializers.ValidationError("Invalid credentials.")
         
         attrs['user'] = user
         return attrs
-    
+
 
 class PasswordResetRequestSerializer(serializers.Serializer):
+    """Serializer for password reset request.
+    
+    Validates that the email exists and account is active before
+    sending password reset email.
+    
+    Fields:
+        email: User's email address (required).
+    """
+    
     email = serializers.EmailField(required=True)
     
     def validate_email(self, value):
-        """Prüft, ob ein User mit dieser E-Mail existiert"""
+        """Validate that user exists and account is active.
+        
+        Args:
+            value: Email address to validate.
+            
+        Returns:
+            str: Lowercase email address.
+            
+        Raises:
+            ValidationError: If account is not activated.
+            
+        Note:
+            Does not raise error for non-existent emails to prevent
+            email enumeration attacks.
+        """
         try:
             user = User.objects.get(email=value)
             if not user.is_active:
-                raise serializers.ValidationError("Dein Account ist nicht aktiviert.")
+                raise serializers.ValidationError("Your account is not activated.")
         except User.DoesNotExist:
-            # Aus Sicherheitsgründen keine genaue Fehlermeldung
-            # (verhindert E-Mail-Enumeration)
             pass
         return value.lower()
 
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
+    """Serializer for confirming password reset.
+    
+    Validates new password and confirms it matches confirmation field.
+    
+    Fields:
+        password: New password (write-only, validated).
+        confirmed_password: Password confirmation (write-only).
+    """
+    
     password = serializers.CharField(
         write_only=True,
         required=True,
@@ -118,9 +217,19 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     )
     
     def validate(self, attrs):
-        """Prüft, ob die Passwörter übereinstimmen"""
+        """Validate that passwords match.
+        
+        Args:
+            attrs: Dictionary containing password fields.
+            
+        Returns:
+            dict: Validated attributes.
+            
+        Raises:
+            ValidationError: If passwords don't match.
+        """
         if attrs['password'] != attrs['confirmed_password']:
             raise serializers.ValidationError({
-                "confirmed_password": "Die Passwörter stimmen nicht überein."
+                "confirmed_password": "Passwords do not match."
             })
         return attrs

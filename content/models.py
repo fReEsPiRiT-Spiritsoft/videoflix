@@ -1,16 +1,27 @@
+"""Content models for video streaming platform.
+
+This module contains the data models for video content management, including
+categories, videos, and video resolutions for HLS streaming.
+"""
+
 from django.db import models
 from django.contrib.auth.models import User
 import os
 
 
 class Category(models.Model):
-    """Kategorien für Videos (z.B. Drama, Action, Romance)"""
+    """Video category model for content organization.
+    
+    Represents content categories (e.g., Drama, Action, Romance) for
+    organizing and filtering videos.
+    """
+    
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(max_length=100, unique=True)
     
     class Meta:
-        verbose_name = "Kategorie"
-        verbose_name_plural = "Kategorien"
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"
         ordering = ['name']
     
     def __str__(self):
@@ -18,7 +29,12 @@ class Category(models.Model):
 
 
 class Video(models.Model):
-    """Hauptmodel für Videos"""
+    """Main video content model.
+    
+    Stores video metadata, file references, and processing status for
+    HLS (HTTP Live Streaming) delivery.
+    """
+    
     title = models.CharField(max_length=200)
     description = models.TextField()
     video_file = models.FileField(upload_to='videos/%Y/%m/')
@@ -28,13 +44,10 @@ class Video(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    # Video-Informationen
-    duration = models.IntegerField(null=True, blank=True, help_text="Dauer in Sekunden")
+    duration = models.IntegerField(null=True, blank=True, help_text="Duration in seconds")
     views = models.IntegerField(default=0)
     is_public = models.BooleanField(default=True)
-    
-    # HLS-Processing Status
-    is_processed = models.BooleanField(default=False, help_text="Gibt an, ob Video für HLS verarbeitet wurde")
+    is_processed = models.BooleanField(default=False, help_text="Indicates if video has been processed for HLS")
     
     class Meta:
         verbose_name = "Video"
@@ -46,14 +59,24 @@ class Video(models.Model):
     
     @property
     def thumbnail_url(self):
-        """Gibt die URL des Thumbnails zurück"""
+        """Get the thumbnail URL if available.
+        
+        Returns:
+            str: Thumbnail URL or None.
+        """
         if self.thumbnail:
             return self.thumbnail.url
         return None
     
     def get_hls_path(self, resolution):
-        """Gibt den Pfad zur HLS-Playlist für eine bestimmte Auflösung zurück"""
-        # Beispiel: media/videos/hls/1/480p/index.m3u8
+        """Get the HLS playlist path for a specific resolution.
+        
+        Args:
+            resolution: Video resolution string (e.g., '480p').
+            
+        Returns:
+            str: Path to HLS playlist file (e.g., 'videos/hls/1/480p/index.m3u8').
+        """
         return os.path.join('videos', 'hls', str(self.id), resolution, 'index.m3u8')
 
 
