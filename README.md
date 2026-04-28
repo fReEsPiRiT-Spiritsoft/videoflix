@@ -4,6 +4,9 @@ Ein professionelles Django-Backend für Video-Streaming mit adaptiver Bitrate (A
 
 ---
 
+Link zum passenden Frontend: https://github.com/fReEsPiRiT-Spiritsoft/videoflix_frontend
+
+
 ## 📋 Table of Contents / Inhaltsverzeichnis
 
 ### Deutsch
