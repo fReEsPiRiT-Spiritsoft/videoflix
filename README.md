@@ -40,7 +40,7 @@ Link zum passenden Frontend: https://github.com/fReEsPiRiT-Spiritsoft/videoflix_
 
 1. **Repository klonen**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/fReEsPiRiT-Spiritsoft/videoflix.git
    cd videoflix
    ```
 
