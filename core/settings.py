@@ -38,7 +38,7 @@ CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", default="http://lo
 
 CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", "http://localhost:4200,http://localhost:5500").split(",")
 
-CORS_ALLOW_CREDENTIALS = True  # Wichtig für Cookies!
+CORS_ALLOW_CREDENTIALS = True  
 
 CORS_ALLOW_HEADERS = [
     'accept',
@@ -62,7 +62,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'corsheaders',  # NEU!
+    'corsheaders', 
     'django_rq',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
@@ -73,7 +73,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # NEU! Muss vor CommonMiddleware stehen
+    'corsheaders.middleware.CorsMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -199,8 +199,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'authentication.authentication.CookieJWTAuthentication',  # Cookies!
-        'rest_framework_simplejwt.authentication.JWTAuthentication',  # Fallback für Authorization Header
+        'authentication.authentication.CookieJWTAuthentication',  
+        'rest_framework_simplejwt.authentication.JWTAuthentication',  
     ),
 }
 
