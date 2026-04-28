@@ -5,6 +5,7 @@ activation, login, logout, token refresh, and password reset functionality.
 """
 
 from django.http import HttpResponse
+from django.conf import settings
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -93,10 +94,14 @@ def activate_view(request, uidb64, token):
         return render_activation_response('activation_token_expired.html', status_code=400)
     
     if activate_user_account(user, activation_token):
-        context = {'user_email': user.email}
+        context = {
+            'user_email': user.email,
+            'frontend_login_url': f"{settings.FRONTEND_URL}/pages/auth/login.html"
+        }
         return render_activation_response('activation_success.html', context)
     
-    return render_activation_response('activation_already_active.html', status_code=400)
+    context = {'frontend_login_url': f"{settings.FRONTEND_URL}/pages/auth/login.html"}
+    return render_activation_response('activation_already_active.html', context, status_code=400)
     
 @api_view(['POST'])
 @permission_classes([AllowAny])

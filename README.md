@@ -1,329 +1,435 @@
-# Videoflix - Docker Setup
+# Videoflix Backend 🎬
 
-Dies ist ein Docker Setup, dass dir die Entwicklung und uns die Abnahme des Videoflix Projektes erleichtern soll.
-
-Vor der Verwendung schaue dir bitte die einführenden Videos unter:
-
-[Link zu Videos](https://developer-akademie.teachable.com/courses/enrolled/1656501)
-
-dazu an.
-
-## Table of Contents
-
-<!-- TOC -->
-
-- [Videoflix - Docker Setup](#videoflix---docker-setup)
-  - [Table of Contents](#table-of-contents)
-  - [Voraussetzungen](#voraussetzungen)
-  - [Quickstart](#quickstart)
-    - [Aufsetzen und Einrichtung des Projekts](#aufsetzen-und-einrichtung-des-projekts)
-      - [Anpassen der settings.py Datei](#anpassen-der-settingspy-datei)
-  - [Usage](#usage)
-    - [Environment Variablen](#environment-variablen)
-    - [Migrations im Docker Container](#migrations-im-docker-container)
-    - [requirements.txt](#requirementstxt)
-  - [Troubleshooting](#troubleshooting)
-
-<!-- /TOC -->
+Ein professionelles Django-Backend für Video-Streaming mit adaptiver Bitrate (ABR), automatischer Thumbnail-Generierung und asynchroner Video-Verarbeitung.
 
 ---
 
-## Voraussetzungen
+## 📋 Table of Contents / Inhaltsverzeichnis
 
-- **Docker** mit **docker-compose** installiert.
+### Deutsch
+- [🚀 Quick Start](#-quick-start-deutsch)
+- [📦 Was ist Videoflix?](#-was-ist-videoflix)
+- [✨ Features](#-features)
+- [🔧 Verwendung](#-verwendung)
+- [⚙️ Konfiguration](#️-konfiguration)
+- [🐛 Troubleshooting](#-troubleshooting)
 
-    Siehe [Anleitung](https://docs.docker.com/compose/install/) zur Installation.
-
-    Erforderlich für den Start des Projekts, da es vollständig containerisiert ist.
-
-- **git** ist installiert.
-
-    Siehe [Anleitung](https://git-scm.com/downloads) zur Installation.
-
-    Erforderlich, um das Projekt herunterzuladen.
+### English
+- [🚀 Quick Start](#-quick-start-english)
+- [📦 What is Videoflix?](#-what-is-videoflix)
+- [✨ Features](#-features-1)
+- [🔧 Usage](#-usage)
+- [⚙️ Configuration](#️-configuration)
+- [🐛 Troubleshooting](#-troubleshooting-1)
 
 ---
 
-## Quickstart
+# Deutsch 🇩🇪
 
-> [!CAUTION]
-> <span style="color: red;">Bitte halte dich genau an die hier beschriebene Anleitung. Wenn du die grundlegene
-Konfiguration veränderst, kann das Projekt unter Umständen nicht gestartet werden.</span>
->
-> <span style="color: red;">Du kannst Variablen in der `.env` Datei verändern oder neue hinzufügen. Bitte lösche keine
-der vorhandenen Variablen.</span>
->
-> <span style="color: red;">Bitte ändere nichts, an den im weiteren Verlauf, angegebenen Einträgen in der `settings.py`.</span>
->
-> <span style="color: red;">Bitte nimm keine Änderungen an den Dateien `backend.Dockerfile`, `docker-compose` und `backend.entrypoint.sh` vor!<ins></span>
->
-> <span style="color: red;">Du kannst (und musst), weitere Packages installieren und auch entsprechende Änderungen an
-der `settings.py` Datei vornehmen. <ins>Achte darauf deine `requirements.txt` Datei regelmäßig zu aktualisieren.<ins></span>
+## 🚀 Quick Start (Deutsch)
 
-1. **Definiere die Umgebungsvariablen, unter Benutzung der [.env.template](./.env.template) Datei**. Nutze hierzu die
-`git bash Komandozeile`.
+### Voraussetzungen
 
-    ```bash
-    # Erstellt eine .env-Datei mit dem Inhalt von .env.template
-    cp .env.template .env
-    ```
+- **Docker** & **Docker Compose** installiert ([Installation](https://docs.docker.com/compose/install/))
+- **Git** installiert ([Installation](https://git-scm.com/downloads))
 
-    > [!IMPORTANT]
-    > Stelle sicher, dass die Platzhalterwerte gegebenenfalls durch tatsächliche, für deine Umgebung spezifische Werte
-    ersetzt werden.
+### Installation in 3 Schritten
 
-### Aufsetzen und Einrichtung des Projekts
+1. **Repository klonen**
+   ```bash
+   git clone <repository-url>
+   cd videoflix
+   ```
 
-- Virtual Environment erstellen und aktivieren
-- Django installieren
-- DRF Installieren
-- django rq installieren
-- django-redis installieren
-- gunicorn installieren
-- psycopg2-binary installieren
-- python-dotenv installieren
-- whitenoise installieren
-- aktualisiere deine `requirements.txt` Datei
-- erstelle das Django Projekt im aktuellen Ordner
-    - projektname => core
+2. **Umgebungsvariablen konfigurieren**
+   ```bash
+   cp .env.template .env
+   ```
+   
+   Passe die `.env` Datei mit deinen Werten an (siehe [Konfiguration](#️-konfiguration)).
 
-#### <ins>Anpassen der `settings.py` Datei
+3. **Docker Container starten**
+   ```bash
+   docker compose up --build
+   ```
 
-Passe deine `seetings.py` Datei wie folgt an (Bitte lösche unnötige Kommentare, die dir ggf. nur Informationen zum
-Editieren liefern. Die ... geben an, dass hier weitere Zeilen stehen, diese müssen auch erhalten bleiben):
+✅ **Fertig!** Die Anwendung läuft auf [http://localhost:8000](http://localhost:8000)
 
-```python
-# settings.py
+---
 
-from pathlib import Path
-# zwei neue Zeilen
-import os
-from dotenv import load_dotenv
+✅ **Fertig!** Die Anwendung läuft auf [http://localhost:8000](http://localhost:8000)
 
-load_dotenv()
-...
+---
 
-# folgende Zeile ändern
-SECRET_KEY = os.getenv('SECRET_KEY', default='django-insecure-@#x5h3zj!g+8g1v@2^b6^9$8&f1r7g$@t3v!p4#=g0r5qzj4m3')
+## 📦 Was ist Videoflix?
 
-# Zwei Zeilen hinzufügen
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", default="localhost").split(",")
-CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", default="http://localhost:4200").split(",")
+Videoflix ist ein **vollständiges Video-Streaming-Backend** basierend auf Django, das moderne Web-Technologien für professionelles Video-Hosting nutzt.
 
-# Füge django-rq zu deinen Apps hinzu
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django_rq', # neue Zeile
-]
+### Technologie-Stack
 
-# Füge das whitenoise middleware hinzu
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # neue Zeile
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
+- **Backend**: Django 6.0.4 + Django REST Framework
+- **Datenbank**: PostgreSQL (containerisiert)
+- **Cache & Queue**: Redis + Django-RQ
+- **Video-Processing**: FFmpeg (HLS mit Adaptive Bitrate Streaming)
+- **Authentication**: JWT mit HttpOnly Cookies (djangorestframework-simplejwt)
+- **CORS**: django-cors-headers für Cross-Origin Requests
+- **Server**: Gunicorn WSGI Server
+- **Container**: Docker + Docker Compose
 
-...
+---
 
-# Ändere die Einstellungen für die Datenbak und Füge die Konfiguration für Redis und den RQ-Worker hinzu
+## ✨ Features
 
-# Ersetze die DATABASES Einstellung
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME", default="videoflix_db"),
-        "USER": os.environ.get("DB_USER", default="videoflix_user"),
-        "PASSWORD": os.environ.get("DB_PASSWORD", default="supersecretpassword"),
-        "HOST": os.environ.get("DB_HOST", default="db"),
-        "PORT": os.environ.get("DB_PORT", default=5432)
-    }
-}
+### 🎥 Video-Funktionen
+- **Adaptive Bitrate Streaming (ABR)**: Automatische Konvertierung in 480p, 720p, 1080p
+- **HLS-Format**: HTTP Live Streaming mit .m3u8 Playlists
+- **Automatische Thumbnails**: Generierung aus dem mittleren Frame
+- **Asynchrone Verarbeitung**: Video-Processing im Hintergrund via Redis Queue
 
-# Füge die Konfiguration für Redis und RQ hinzu
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.environ.get("REDIS_LOCATION", default="redis://redis:6379/1"),
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient"
-        },
-        "KEY_PREFIX": "videoflix"
-    }
-}
+### 🔐 Authentifizierung
+- **JWT-basierte Auth**: Secure tokens in HttpOnly Cookies
+- **Email-Aktivierung**: Account-Bestätigung per E-Mail
+- **Passwort-Reset**: Sichere Passwort-Wiederherstellung
+- **CORS-Support**: Cross-Origin Requests für Frontend-Integration
 
-RQ_QUEUES = {
-    'default': {
-        'HOST': os.environ.get("REDIS_HOST", default="redis"),
-        'PORT': os.environ.get("REDIS_PORT", default=6379),
-        'DB': os.environ.get("REDIS_DB", default=0),
-        'DEFAULT_TIMEOUT': 900,
-        'REDIS_CLIENT_KWARGS': {},
-    },
-}
+### 🛠️ Admin & Management
+- **Auto-Superuser**: Automatische Admin-Erstellung beim Start
+- **Database Cleanup**: Management-Command für Datenbankbereinigung
+- **Static Files**: WhiteNoise für optimiertes Static-File-Serving
+- **Docker Ready**: Vollständig containerisiert mit Docker Compose
 
-...
+---
 
-# Ändere und Erweitere die Konfiguration für static und media Dateien
-STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "static"
+## 🔧 Verwendung
 
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+### Datenbank-Migrationen
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-...
-
-```
-
-1. **Build and start the project using `docker-compose`.**
-
+**Im laufenden Container ausführen:**
 ```bash
-docker-compose up --build
+docker compose exec web python manage.py makemigrations
+docker compose exec web python manage.py migrate
 ```
 
--> falls das nicht funktioniert, verwende (ohne "-")
+### Neue Pakete installieren
+
+1. Paket zu `requirements.txt` hinzufügen
+2. Container neu bauen:
+   ```bash
+   docker compose up --build
+   ```
+
+### Admin-Panel
+
+Zugriff auf das Django Admin Panel: [http://localhost:8000/admin](http://localhost:8000/admin)
+
+**Login-Daten** (aus `.env`):
+- Username: `admin` (oder `DJANGO_SUPERUSER_USERNAME`)
+- Password: `adminpassword` (oder `DJANGO_SUPERUSER_PASSWORD`)
+
+### Videos hochladen
+
+1. Im Admin-Panel einloggen
+2. Zu "Videos" navigieren
+3. Video hochladen → automatische Verarbeitung startet
+4. Status in der Redis Queue überprüfen: [http://localhost:8000/django-rq/](http://localhost:8000/django-rq/)
+
+---
+
+## ⚙️ Konfiguration
+
+### Environment Variablen (.env)
+
+| Variable | Beschreibung | Standard | Pflicht |
+|----------|--------------|----------|---------|
+| **DJANGO_SUPERUSER_USERNAME** | Admin-Benutzername | `admin` | ✅ |
+| **DJANGO_SUPERUSER_PASSWORD** | Admin-Passwort | `adminpassword` | ✅ |
+| **DJANGO_SUPERUSER_EMAIL** | Admin-Email | `admin@example.com` | ✅ |
+| **SECRET_KEY** | Django Secret Key | - | ✅ |
+| **DEBUG** | Debug-Modus | `True` | ❌ |
+| **ALLOWED_HOSTS** | Erlaubte Hosts (comma-separated) | `localhost,127.0.0.1` | ✅ |
+| **CSRF_TRUSTED_ORIGINS** | CSRF-Trusted Origins | `http://localhost:5500,...` | ✅ |
+| **CORS_ALLOWED_ORIGINS** | CORS-Allowed Origins | `http://localhost:5500,...` | ✅ |
+| **DB_NAME** | Datenbankname | `your_database_name` | ✅ |
+| **DB_USER** | Datenbank-Benutzer | `your_database_user` | ✅ |
+| **DB_PASSWORD** | Datenbank-Passwort | `your_database_password` | ✅ |
+| **DB_HOST** | Datenbank-Host | `db` | ❌ |
+| **DB_PORT** | Datenbank-Port | `5432` | ❌ |
+| **REDIS_HOST** | Redis Host | `redis` | ❌ |
+| **REDIS_PORT** | Redis Port | `6379` | ❌ |
+| **EMAIL_HOST** | SMTP Server | `smtp.example.com` | ✅ |
+| **EMAIL_PORT** | SMTP Port | `587` | ❌ |
+| **EMAIL_USE_TLS** | TLS verwenden | `True` | ❌ |
+| **EMAIL_USE_SSL** | SSL verwenden | `False` | ❌ |
+| **EMAIL_HOST_USER** | E-Mail Benutzername | - | ✅ |
+| **EMAIL_HOST_PASSWORD** | E-Mail Passwort | - | ✅ |
+| **DEFAULT_FROM_EMAIL** | Absender-Email | `EMAIL_HOST_USER` | ❌ |
+
+> **⚠️ WICHTIG für Production:**
+> - `DEBUG=False` setzen
+> - Starkes `SECRET_KEY` generieren
+> - `ALLOWED_HOSTS` mit echter Domain konfigurieren
+> - HTTPS-URLs in `CORS_ALLOWED_ORIGINS` und `CSRF_TRUSTED_ORIGINS`
+
+---
+
+## 🐛 Troubleshooting
+
+### Docker startet nicht
+
+**Fehler**: `unable to get image 'postgres:latest'`
+
+**Lösung**: Docker Desktop starten
+
+---
+
+### Entrypoint-Fehler
+
+**Fehler**: `exec ./backend.entrypoint.sh: no such file or directory`
+
+**Lösung**: Line-Endings auf `LF` setzen (nicht `CRLF`)
 ```bash
-docker compose up --build
+# In VS Code: Unten rechts auf "CRLF" klicken → "LF" auswählen
 ```
 
-Open application in browser on [localhost:8000](http://localhost:8000).
-
 ---
 
-## Usage
+### Migration schlägt fehl
 
-### Environment Variablen
+**Fehler**: Datenbank-Migration nach Model-Änderung fehlgeschlagen
 
-Alle erforderlichen Umgebungsvariablen werden in der [.env](./.env) Datei gespeichert.
-
-> [!IMPORTANT]
-> Bitte verändere die Namen der Variablen in dieser Konfiguration nicht. Dies kann unter Umständen dazu führen, dass wir
-das Projekt nicht prüfen und abnehmen können.
->
-> Ändere bereits vorhandene Variablen gegebenenfalls mit sinnvollen Werten
-
----
-
-> [!NOTE]
-> [backend.entrypoint.sh](backend.entrypoint.sh) erstellt automatisch einen Superuser basierend auf den
-Umgebungsvariablen **`DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_PASSWORD` und `DJANGO_SUPERUSER_EMAIL`**
-
-| Name | Type | Description | Default | Mandatory |
-| :--- | :---: | :---------- | :----- | :---: |
-| **DJANGO_SUPERUSER_USERNAME** | str | Benutzername für das Django-Admin-Superuser-Konto. Dieser Benutzer wird automatisch erstellt wenn er nicht existiert. | `admin` |   |
-| **DJANGO_SUPERUSER_PASSWORD** | str |  Passwort für das Django-Admin-Superuser-Konto. Achte darauf, dass es sicher ist. | `adminpassword` |   |
-| **DJANGO_SUPERUSER_EMAIL** | str |  E-Mail-Adresse für das Django-Admin-Superuser-Konto. Wird für die Wiederherstellung des Kontos und für Benachrichtigungen verwendet. | `admin@example.com` |   |
-| **SECRET_KEY** | str | Ein geheimer Schlüssel für die Kryptografie in Django. Dieser sollte eine lange, zufällige Zeichenfolge sein und vertraulich behandelt werden. |   | x |
-| **DEBUG** | bool | Aktiviert oder deaktiviert den Debug-Modus. Sollte in der Produktion auf False gesetzt werden, um die Offenlegung sensibler Informationen zu verhindern. | `True` |   |
-| **ALLOWED_HOSTS** | List[str] | Eine Liste von Strings, die die Host-/Domainnamen darstellen, die diese Django-Site bedienen kann. Wichtig für die Sicherheit. | `[localhost]` |   |
-| **CSRF_TRUSTED_ORIGINS** | List[str] | Cors-Headers allowed origins. | `[http://localhost:4200]` |   |
-| **DB_NAME** | str | Name der PostgreSQL-Datenbank, zu der eine Verbindung hergestellt werden soll. Wichtig für Datenbankoperationen. | `your_database_name` | x |
-| **DB_USER** | str | Benutzername für die Authentifizierung bei der PostgreSQL-Datenbank. | `your_database_user` | x |
-| **DB_PASSWORD** | str | Passwort für den PostgreSQL-Datenbankbenutzer. | `your_database_password` | x |
-| **DB_HOST** | str | Host-Adresse der PostgreSQL-Datenbank. Normalerweise localhost oder der Dienstname in Docker. | `db` |   |
-| **DB_PORT** | int | Portnummer für die Verbindung zur PostgreSQL-Datenbank. | `5432` |   |
-| **REDIS_LOCATION** | str | Redis location | `redis://redis:6379/1` |   |
-| **REDIS_HOST** | str | Redis host | `redis` |   |
-| **REDIS_PORT** | int | Redis port | `6379` |   |
-| **REDIS_DB** | int | Redis DB | `0` |   |
-| **EMAIL_HOST** | str | SMTP-Server-Adresse für den Versand von E-Mails. | `smtp.example.com` | x |
-| **EMAIL_PORT** | int | Portnummer für den SMTP-Server. | `587` |   |
-| **EMAIL_USE_TLS** | bool | Aktiviert TLS für den E-Mail-Versand. Empfohlen für die Sicherheit. | `True` |   |
-| **EMAIL_USE_SSL** | bool | E-Mail verwendet SSL | `False` |   |
-| **EMAIL_HOST_USER** | str | Benutzername für das E-Mail-Konto, das zum Senden von E-Mails verwendet wird. | `your_email_user` | x |
-| **EMAIL_HOST_PASSWORD** | str | Passwort für das E-Mail-Konto. Achte auf die Sicherheit. | `your_email_password` | x |
-| **DEFAULT_FROM_EMAIL** | str | E-Mailadresse die von Django verwendet wird | `EMAIL_HOST_USER` |   |
-
-### Migrations im Docker Container
-
-Um gemachte Änderungen an der Datenbankstruktur an Docker zu übertragen hast du zwei verschiedene Möglichkeiten:
-
-1. Docker Container komplett neu erstellen (nicht empfohlen)
-
-    - stoppe Docker in der Kommandozeile mit der Tastenkombination `Strg+C`
-    - starte Docker neu mit dem Befehl `docker-compose up --build`
-    - falls `docker-compose up --build` nicht funktioniert, verwende `docker compose up --build`
-
-2. Führe die Migration direkt im Docker Container aus (besser)
-
-    - erstelle die migrations Dateien direkt im Docker Container
-
-    ```bash
-    docker-compose exec web python manage.py makemigrations
-    ```
-
-    Dieser Befehl wird direk in der Bash des Docker Containers ausgeführt. (Wir erinnern uns, unser Docker Setup
-    enthält im Prinzip ein komplettes Betriebssystem)
-
-    - Führe die Migration aus:
-
-    ```bash
-    docker-compose exec web python manage.py migrate
-    ```
-
-### requirements.txt
-
-Die Dependencies der Anwendung sind in der Datei [requirements.txt](./requirements.txt) aufgeführt.
-
-Um sie in den Docker Container zu ändern, muss die Anwendung neu erstellt werden.
-
-Um nur die primären (Top-Level) Pakete aufzulisten, die du über `pip` installiert hast - ohne ihre Abhängigkeiten
-anzuzeigen - verwende:
-
+**Lösung**: Migration im Container ausführen
 ```bash
-pip list --not-required
+docker compose exec web python manage.py makemigrations
+docker compose exec web python manage.py migrate
 ```
 
-## Troubleshooting
-
-- **Beim Starten von Docker erhalte ich in der Komandozeile diesen Fehler:**
-
-    ```bash
-    unable to get image 'postgres:latest': error during connect:
-    Get "http://%2F%2F.%2Fpipe%2FdockerDesktopLinuxEngine/v1.48/images/postgres:latest/json":
-    open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
-    ```
-
-    > [!NOTE]
-    > Bitte stelle sicher, dass du Docker Desktop gestartet hast.
-
-- **Das Starten von Docker bricht mit der folgenden Meldung in der Konsole ab:**
-
-    ```bash
-    videoflix_backend   | exec ./backend.entrypoint.sh: no such file or directory
-    videoflix_backend exited with code 255
-    ```
-
-    > [!NOTE]
-    > Bitte stelle sicher, dass die Datei `backend.entrypoint.sh` mit der End of Line Sequence LF abgespeichert ist.
-    >
-    > Siehe [Google Suche](https://www.google.com/search?sca_esv=81208bf63503b115&rlz=1C1CHBF_deDE1069DE1069&q=cr+lf+lf+in+vscode&spell=1&sa=X&ved=2ahUKEwihofbto4eNAxXK9bsIHXhtCLYQBSgAegQIDxAB&biw=1920&bih=911&dpr=1)
-
-- **Beim Starten des Docker Containern erhältst du nach einer Änderung der Datenbank eine Fehlermeldung, dass die
-Migration der Datenbank fehlschlägt.**
-
-    > [!NOTE]
-    > Dies kann passieren, wenn du Änderungen an einem Model vornimmst. Um trotzdem eine Migration durchführen zu können
-    kannst do folgenden Befehl verwenden:
-    >
-    > ```bash
-    > # docker run --rm [OPTIONEN] <DEIN_IMAGE_NAME> <DEIN_MIGRATIONSBEFEHL>
-    > docker run --rm web python manage.py makemigrations
-    >
-    > # oftmals reicht dieser Befehl bereits aus um beim nächsten start das Problem zu umgehen.
-    > # Zur Sicherheit kannst du aber auch direkt im Anschluss die eigentliche Migration durchführen.
-    > docker run --rm web python manage.py migrate
-    > ```
-    >
 ---
+
+### Port 8000 bereits belegt
+
+**Fehler**: `port is already allocated`
+
+**Lösung**: Anderen Prozess stoppen oder Port ändern
+```bash
+# Port-Konflikt finden
+lsof -i :8000  # Linux/Mac
+netstat -ano | findstr :8000  # Windows
+
+# Oder Port in docker-compose.yml ändern
+ports:
+  - "8001:8000"  # Host:Container
+```
+
+---
+
+# English 🇬🇧
+
+## 🚀 Quick Start (English)
+
+### Prerequisites
+
+- **Docker** & **Docker Compose** installed ([Installation](https://docs.docker.com/compose/install/))
+- **Git** installed ([Installation](https://git-scm.com/downloads))
+
+### Installation in 3 Steps
+
+1. **Clone repository**
+   ```bash
+   git clone <repository-url>
+   cd videoflix
+   ```
+
+2. **Configure environment variables**
+   ```bash
+   cp .env.template .env
+   ```
+   
+   Adjust the `.env` file with your values (see [Configuration](#️-configuration)).
+
+3. **Start Docker containers**
+   ```bash
+   docker compose up --build
+   ```
+
+✅ **Done!** The application runs on [http://localhost:8000](http://localhost:8000)
+
+---
+
+## 📦 What is Videoflix?
+
+Videoflix is a **complete video streaming backend** based on Django, utilizing modern web technologies for professional video hosting.
+
+### Technology Stack
+
+- **Backend**: Django 6.0.4 + Django REST Framework
+- **Database**: PostgreSQL (containerized)
+- **Cache & Queue**: Redis + Django-RQ
+- **Video Processing**: FFmpeg (HLS with Adaptive Bitrate Streaming)
+- **Authentication**: JWT with HttpOnly Cookies (djangorestframework-simplejwt)
+- **CORS**: django-cors-headers for Cross-Origin Requests
+- **Server**: Gunicorn WSGI Server
+- **Container**: Docker + Docker Compose
+
+---
+
+## ✨ Features
+
+### 🎥 Video Features
+- **Adaptive Bitrate Streaming (ABR)**: Automatic conversion to 480p, 720p, 1080p
+- **HLS Format**: HTTP Live Streaming with .m3u8 playlists
+- **Automatic Thumbnails**: Generated from middle frame
+- **Asynchronous Processing**: Background video processing via Redis Queue
+
+### 🔐 Authentication
+- **JWT-based Auth**: Secure tokens in HttpOnly Cookies
+- **Email Activation**: Account confirmation via email
+- **Password Reset**: Secure password recovery
+- **CORS Support**: Cross-Origin Requests for frontend integration
+
+### 🛠️ Admin & Management
+- **Auto-Superuser**: Automatic admin creation on startup
+- **Database Cleanup**: Management command for database cleanup
+- **Static Files**: WhiteNoise for optimized static file serving
+- **Docker Ready**: Fully containerized with Docker Compose
+
+---
+
+## 🔧 Usage
+
+### Database Migrations
+
+**Execute in running container:**
+```bash
+docker compose exec web python manage.py makemigrations
+docker compose exec web python manage.py migrate
+```
+
+### Install New Packages
+
+1. Add package to `requirements.txt`
+2. Rebuild container:
+   ```bash
+   docker compose up --build
+   ```
+
+### Admin Panel
+
+Access Django Admin Panel: [http://localhost:8000/admin](http://localhost:8000/admin)
+
+**Login credentials** (from `.env`):
+- Username: `admin` (or `DJANGO_SUPERUSER_USERNAME`)
+- Password: `adminpassword` (or `DJANGO_SUPERUSER_PASSWORD`)
+
+### Upload Videos
+
+1. Login to Admin Panel
+2. Navigate to "Videos"
+3. Upload video → automatic processing starts
+4. Check status in Redis Queue: [http://localhost:8000/django-rq/](http://localhost:8000/django-rq/)
+
+---
+
+## ⚙️ Configuration
+
+### Environment Variables (.env)
+
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| **DJANGO_SUPERUSER_USERNAME** | Admin username | `admin` | ✅ |
+| **DJANGO_SUPERUSER_PASSWORD** | Admin password | `adminpassword` | ✅ |
+| **DJANGO_SUPERUSER_EMAIL** | Admin email | `admin@example.com` | ✅ |
+| **SECRET_KEY** | Django Secret Key | - | ✅ |
+| **DEBUG** | Debug mode | `True` | ❌ |
+| **ALLOWED_HOSTS** | Allowed hosts (comma-separated) | `localhost,127.0.0.1` | ✅ |
+| **CSRF_TRUSTED_ORIGINS** | CSRF trusted origins | `http://localhost:5500,...` | ✅ |
+| **CORS_ALLOWED_ORIGINS** | CORS allowed origins | `http://localhost:5500,...` | ✅ |
+| **DB_NAME** | Database name | `your_database_name` | ✅ |
+| **DB_USER** | Database user | `your_database_user` | ✅ |
+| **DB_PASSWORD** | Database password | `your_database_password` | ✅ |
+| **DB_HOST** | Database host | `db` | ❌ |
+| **DB_PORT** | Database port | `5432` | ❌ |
+| **REDIS_HOST** | Redis host | `redis` | ❌ |
+| **REDIS_PORT** | Redis port | `6379` | ❌ |
+| **EMAIL_HOST** | SMTP server | `smtp.example.com` | ✅ |
+| **EMAIL_PORT** | SMTP port | `587` | ❌ |
+| **EMAIL_USE_TLS** | Use TLS | `True` | ❌ |
+| **EMAIL_USE_SSL** | Use SSL | `False` | ❌ |
+| **EMAIL_HOST_USER** | Email username | - | ✅ |
+| **EMAIL_HOST_PASSWORD** | Email password | - | ✅ |
+| **DEFAULT_FROM_EMAIL** | Sender email | `EMAIL_HOST_USER` | ❌ |
+
+> **⚠️ IMPORTANT for Production:**
+> - Set `DEBUG=False`
+> - Generate strong `SECRET_KEY`
+> - Configure `ALLOWED_HOSTS` with real domain
+> - Use HTTPS URLs in `CORS_ALLOWED_ORIGINS` and `CSRF_TRUSTED_ORIGINS`
+
+---
+
+## 🐛 Troubleshooting
+
+### Docker won't start
+
+**Error**: `unable to get image 'postgres:latest'`
+
+**Solution**: Start Docker Desktop
+
+---
+
+### Entrypoint Error
+
+**Error**: `exec ./backend.entrypoint.sh: no such file or directory`
+
+**Solution**: Set line endings to `LF` (not `CRLF`)
+```bash
+# In VS Code: Click "CRLF" at bottom right → Select "LF"
+```
+
+---
+
+### Migration fails
+
+**Error**: Database migration failed after model changes
+
+**Solution**: Execute migration in container
+```bash
+docker compose exec web python manage.py makemigrations
+docker compose exec web python manage.py migrate
+```
+
+---
+
+### Port 8000 already in use
+
+**Error**: `port is already allocated`
+
+**Solution**: Stop other process or change port
+```bash
+# Find port conflict
+lsof -i :8000  # Linux/Mac
+netstat -ano | findstr :8000  # Windows
+
+# Or change port in docker-compose.yml
+ports:
+  - "8001:8000"  # Host:Container
+```
+
+---
+
+## 📝 License / Lizenz
+
+This project is licensed under the MIT License.
+
+Dieses Projekt ist unter der MIT-Lizenz lizenziert.
+
+---
+
+## 🤝 Contributing / Mitwirken
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+Beiträge sind willkommen! Bitte sende gerne einen Pull Request.
+
+---
+
+**Made with ❤️ using Django & Docker**

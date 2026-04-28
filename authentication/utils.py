@@ -22,8 +22,7 @@ def build_activation_link(user, token):
         str: Complete activation URL.
     """
     uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-    return f"http://localhost:8000/api/activate/{uidb64}/{token}/"
-
+    return f"{settings.BACKEND_URL}/api/activate/{uidb64}/{token}/"
 
 def send_activation_email(user, token):
     """Send account activation email with HTML and text templates.
@@ -73,7 +72,7 @@ def build_password_reset_link(user, token):
         str: Complete password reset URL.
     """
     uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-    return f"http://localhost:8000/api/password-reset/{uidb64}/{token}/"
+    return f"{settings.BACKEND_URL}/api/password-reset/{uidb64}/{token}/"
 
 
 def send_password_reset_email(user, token):
