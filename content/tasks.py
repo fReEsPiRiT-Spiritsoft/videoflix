@@ -4,11 +4,12 @@ This module provides Django RQ tasks for converting uploaded videos into
 HLS (HTTP Live Streaming) format with multiple resolution variants.
 """
 
+import json
 import os
 import subprocess
-import json
-from pathlib import Path
+
 from django.conf import settings
+
 from content.models import Video, VideoResolution
 
 
@@ -260,11 +261,15 @@ def process_video(video_id):
         # Generate thumbnail first for faster user feedback
         print("  -> Generating thumbnail...")
         try:
-            thumbnail_path = generate_thumbnail(video.id, input_path)
-            if thumbnail_path:
-                save_thumbnail_to_video(video, thumbnail_path)
+            video.refresh_from_db(fields=['thumbnail'])
+            if not video.thumbnail:
+                thumbnail_path = generate_thumbnail(video.id, input_path)
+                if thumbnail_path:
+                    save_thumbnail_to_video(video, thumbnail_path)
+                else:
+                    print("    x Thumbnail generation failed")
             else:
-                print("    x Thumbnail generation failed")
+                print("    -> Custom thumbnail already set, skipping generation")
         except Exception as e:
             print(f"    x Thumbnail error: {str(e)}")
         
@@ -273,7 +278,7 @@ def process_video(video_id):
         process_all_resolutions(video, input_path, hls_base_dir)
         
         video.is_processed = True
-        video.save()
+        video.save(update_fields=['is_processed'])
         print(f" Video {video.title} processed successfully!")
         
     except Video.DoesNotExist:

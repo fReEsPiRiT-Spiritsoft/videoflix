@@ -4,13 +4,16 @@ This module contains utility functions for video authentication, validation,
 file operations, and HLS streaming support.
 """
 
-from rest_framework.response import Response
+import os
+
+from django.conf import settings
+from django.http import FileResponse
+
 from rest_framework import status
+from rest_framework.response import Response
+
 from authentication.authentication import CookieJWTAuthentication
 from content.models import Video, VideoResolution
-from django.http import HttpResponse, FileResponse
-from django.conf import settings
-import os
 
 
 def check_video_authentication(request):

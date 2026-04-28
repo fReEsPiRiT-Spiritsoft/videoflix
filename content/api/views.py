@@ -4,30 +4,29 @@ This module provides RESTful API endpoints for video listing, details,
 and HLS streaming (playlists and segments).
 """
 
+import os
+
+from django.http import HttpResponse
+
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.http import FileResponse, Http404, HttpResponse
-from django.conf import settings
+
 from authentication.authentication import CookieJWTAuthentication
-from content.models import Video, VideoResolution
 from content.functions import (
     check_video_authentication,
-    validate_video_resolution,
     validate_segment_filename,
     get_video_by_id,
-    get_video_resolution,
     get_master_playlist_path,
-    get_playlist_path,
     get_segment_path,
     read_playlist_file,
     create_segment_response,
     validate_and_get_video_resolution,
     get_playlist_content
 )
+from content.models import Video
 from .serializers import VideoListSerializer, VideoDetailSerializer
-import os
 
 
 @api_view(['GET'])

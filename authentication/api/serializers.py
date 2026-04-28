@@ -4,13 +4,13 @@ This module provides DRF serializers for user registration, login, and
 password reset operations with validation and error handling.
 """
 
-from rest_framework import serializers
-from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from authentication.models import ActivationToken, PasswordResetToken
-import secrets
 
+from rest_framework import serializers
+
+from authentication.models import ActivationToken
 from authentication.utils import send_activation_email
 
 

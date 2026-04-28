@@ -46,20 +46,14 @@ class VideoListSerializer(serializers.ModelSerializer):
         ]
     
     def get_thumbnail_url(self, obj):
-        """Get absolute thumbnail URL.
-        
-        Args:
-            obj: Video instance.
-            
-        Returns:
-            str: Absolute thumbnail URL or None.
-        """
+        request = self.context.get('request')
         if obj.thumbnail:
-            request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(obj.thumbnail.url)
             return obj.thumbnail.url
-        return None
+        if request:
+            return request.build_absolute_uri('/static/images/thumbnail_placeholder.jpg')
+        return '/static/images/thumbnail_placeholder.jpg'
 
 
 class VideoDetailSerializer(serializers.ModelSerializer):
@@ -95,20 +89,14 @@ class VideoDetailSerializer(serializers.ModelSerializer):
         ]
     
     def get_thumbnail_url(self, obj):
-        """Get absolute thumbnail URL.
-        
-        Args:
-            obj: Video instance.
-            
-        Returns:
-            str: Absolute thumbnail URL or None.
-        """
+        request = self.context.get('request')
         if obj.thumbnail:
-            request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(obj.thumbnail.url)
             return obj.thumbnail.url
-        return None
+        if request:
+            return request.build_absolute_uri('/static/images/thumbnail_placeholder.jpg')
+        return '/static/images/thumbnail_placeholder.jpg'
     
     def get_master_playlist_url(self, obj):
         """Get absolute URL to HLS master playlist for adaptive streaming.

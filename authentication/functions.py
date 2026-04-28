@@ -5,16 +5,16 @@ including activation responses, token management, JWT operations, and password
 reset functionality.
 """
 
+from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from django.contrib.auth.models import User
-from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
-from authentication.models import ActivationToken, PasswordResetToken
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken
+from django.utils.http import urlsafe_base64_decode
+
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from authentication.models import ActivationToken, PasswordResetToken
 
 
 def render_activation_response(template_name, context=None, status_code=200):

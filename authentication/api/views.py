@@ -4,19 +4,14 @@ This module provides RESTful API endpoints for user registration, account
 activation, login, logout, token refresh, and password reset functionality.
 """
 
-from django.http import HttpResponse
 from django.conf import settings
+from django.contrib.auth.models import User
+
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from django.contrib.auth.models import User
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from django.utils.encoding import force_str, force_bytes
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.exceptions import TokenError
-from authentication.models import ActivationToken, PasswordResetToken
-from authentication.utils import send_password_reset_email
+
 from authentication.functions import (
     render_activation_response,
     get_user_from_uidb64,
@@ -31,7 +26,7 @@ from authentication.functions import (
     create_password_reset_token
 )
 from .serializers import (
-    RegistrationSerializer, 
+    RegistrationSerializer,
     LoginSerializer,
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer
