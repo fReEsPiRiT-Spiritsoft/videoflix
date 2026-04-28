@@ -7,20 +7,20 @@ Ein professionelles Django-Backend für Video-Streaming mit adaptiver Bitrate (A
 ## 📋 Table of Contents / Inhaltsverzeichnis
 
 ### Deutsch
-- [🚀 Quick Start](#-quick-start-deutsch)
-- [📦 Was ist Videoflix?](#-was-ist-videoflix)
-- [✨ Features](#-features)
-- [🔧 Verwendung](#-verwendung)
-- [⚙️ Konfiguration](#️-konfiguration)
-- [🐛 Troubleshooting](#-troubleshooting)
+- [ Quick Start](#-quick-start-deutsch)
+- [ Was ist Videoflix?](#-was-ist-videoflix)
+- [ Features](#-features)
+- [ Verwendung](#-verwendung)
+- [ Konfiguration](#️-konfiguration)
+- [ Troubleshooting](#-troubleshooting)
 
 ### English
-- [🚀 Quick Start](#-quick-start-english)
-- [📦 What is Videoflix?](#-what-is-videoflix)
-- [✨ Features](#-features-1)
-- [🔧 Usage](#-usage)
-- [⚙️ Configuration](#️-configuration)
-- [🐛 Troubleshooting](#-troubleshooting-1)
+- [ Quick Start](#-quick-start-english)
+- [ What is Videoflix?](#-what-is-videoflix)
+- [ Features](#-features-1)
+- [ Usage](#-usage)
+- [ Configuration](#️-configuration)
+- [ Troubleshooting](#-troubleshooting-1)
 
 ---
 
@@ -53,15 +53,12 @@ Ein professionelles Django-Backend für Video-Streaming mit adaptiver Bitrate (A
    docker compose up --build
    ```
 
-✅ **Fertig!** Die Anwendung läuft auf [http://localhost:8000](http://localhost:8000)
+
+ **Fertig!** Die Anwendung läuft auf [http://localhost:8000](http://localhost:8000)
 
 ---
 
-✅ **Fertig!** Die Anwendung läuft auf [http://localhost:8000](http://localhost:8000)
-
----
-
-## 📦 Was ist Videoflix?
+##  Was ist Videoflix?
 
 Videoflix ist ein **vollständiges Video-Streaming-Backend** basierend auf Django, das moderne Web-Technologien für professionelles Video-Hosting nutzt.
 
@@ -78,21 +75,21 @@ Videoflix ist ein **vollständiges Video-Streaming-Backend** basierend auf Djang
 
 ---
 
-## ✨ Features
+##  Features
 
-### 🎥 Video-Funktionen
+###  Video-Funktionen
 - **Adaptive Bitrate Streaming (ABR)**: Automatische Konvertierung in 480p, 720p, 1080p
 - **HLS-Format**: HTTP Live Streaming mit .m3u8 Playlists
 - **Automatische Thumbnails**: Generierung aus dem mittleren Frame
 - **Asynchrone Verarbeitung**: Video-Processing im Hintergrund via Redis Queue
 
-### 🔐 Authentifizierung
+###  Authentifizierung
 - **JWT-basierte Auth**: Secure tokens in HttpOnly Cookies
 - **Email-Aktivierung**: Account-Bestätigung per E-Mail
 - **Passwort-Reset**: Sichere Passwort-Wiederherstellung
 - **CORS-Support**: Cross-Origin Requests für Frontend-Integration
 
-### 🛠️ Admin & Management
+###  Admin & Management
 - **Auto-Superuser**: Automatische Admin-Erstellung beim Start
 - **Database Cleanup**: Management-Command für Datenbankbereinigung
 - **Static Files**: WhiteNoise für optimiertes Static-File-Serving
@@ -100,7 +97,7 @@ Videoflix ist ein **vollständiges Video-Streaming-Backend** basierend auf Djang
 
 ---
 
-## 🔧 Verwendung
+##  Verwendung
 
 ### Datenbank-Migrationen
 
@@ -164,7 +161,7 @@ Zugriff auf das Django Admin Panel: [http://localhost:8000/admin](http://localho
 | **EMAIL_HOST_PASSWORD** | E-Mail Passwort | - | ✅ |
 | **DEFAULT_FROM_EMAIL** | Absender-Email | `EMAIL_HOST_USER` | ❌ |
 
-> **⚠️ WICHTIG für Production:**
+> ** WICHTIG für Production:**
 > - `DEBUG=False` setzen
 > - Starkes `SECRET_KEY` generieren
 > - `ALLOWED_HOSTS` mit echter Domain konfigurieren
@@ -172,7 +169,7 @@ Zugriff auf das Django Admin Panel: [http://localhost:8000/admin](http://localho
 
 ---
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### Docker startet nicht
 
@@ -255,7 +252,7 @@ ports:
 
 ---
 
-## 📦 What is Videoflix?
+##  What is Videoflix?
 
 Videoflix is a **complete video streaming backend** based on Django, utilizing modern web technologies for professional video hosting.
 
@@ -272,21 +269,21 @@ Videoflix is a **complete video streaming backend** based on Django, utilizing m
 
 ---
 
-## ✨ Features
+##  Features
 
-### 🎥 Video Features
+###  Video Features
 - **Adaptive Bitrate Streaming (ABR)**: Automatic conversion to 480p, 720p, 1080p
 - **HLS Format**: HTTP Live Streaming with .m3u8 playlists
 - **Automatic Thumbnails**: Generated from middle frame
 - **Asynchronous Processing**: Background video processing via Redis Queue
 
-### 🔐 Authentication
+###  Authentication
 - **JWT-based Auth**: Secure tokens in HttpOnly Cookies
 - **Email Activation**: Account confirmation via email
 - **Password Reset**: Secure password recovery
 - **CORS Support**: Cross-Origin Requests for frontend integration
 
-### 🛠️ Admin & Management
+###  Admin & Management
 - **Auto-Superuser**: Automatic admin creation on startup
 - **Database Cleanup**: Management command for database cleanup
 - **Static Files**: WhiteNoise for optimized static file serving
@@ -294,7 +291,7 @@ Videoflix is a **complete video streaming backend** based on Django, utilizing m
 
 ---
 
-## 🔧 Usage
+##  Usage
 
 ### Database Migrations
 
@@ -358,7 +355,7 @@ Access Django Admin Panel: [http://localhost:8000/admin](http://localhost:8000/a
 | **EMAIL_HOST_PASSWORD** | Email password | - | ✅ |
 | **DEFAULT_FROM_EMAIL** | Sender email | `EMAIL_HOST_USER` | ❌ |
 
-> **⚠️ IMPORTANT for Production:**
+> ** IMPORTANT for Production:**
 > - Set `DEBUG=False`
 > - Generate strong `SECRET_KEY`
 > - Configure `ALLOWED_HOSTS` with real domain
@@ -366,7 +363,7 @@ Access Django Admin Panel: [http://localhost:8000/admin](http://localhost:8000/a
 
 ---
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### Docker won't start
 
@@ -416,20 +413,8 @@ ports:
 
 ---
 
-## 📝 License / Lizenz
+##  License / Lizenz
 
 This project is licensed under the MIT License.
 
 Dieses Projekt ist unter der MIT-Lizenz lizenziert.
-
----
-
-## 🤝 Contributing / Mitwirken
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-Beiträge sind willkommen! Bitte sende gerne einen Pull Request.
-
----
-
-**Made with ❤️ using Django & Docker**
