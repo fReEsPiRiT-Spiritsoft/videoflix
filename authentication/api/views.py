@@ -245,6 +245,6 @@ def password_reset_confirm_view(request, uidb64, token):
         return Response({'error': 'Invalid or expired password reset token.'}, 
                        status=status.HTTP_400_BAD_REQUEST)
     
-    reset_user_password(user, serializer.validated_data['password'], reset_token)
+    reset_user_password(user, serializer.validated_data['new_password'], reset_token)
     return Response({'detail': 'Password has been reset successfully.'}, 
                    status=status.HTTP_200_OK)
