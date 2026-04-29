@@ -72,7 +72,7 @@ def build_password_reset_link(user, token):
         str: Complete password reset URL.
     """
     uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-    return f"{settings.FRONTEND_URL}/pages/auth/confirm_password.html?uid={uidb64}&token={token}"
+    return f"{settings.BACKEND_URL}/api/password-reset/{uidb64}/{token}/"
 
 
 def send_password_reset_email(user, token):
