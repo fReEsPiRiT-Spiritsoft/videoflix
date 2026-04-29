@@ -12,7 +12,7 @@ Link to Frontend: https://github.com/fReEsPiRiT-Spiritsoft/videoflix_frontend
 
 1. **Clone repository**
    ```bash
-   git clone https://github.com/fReEsPiRiT-Spiritsoft/videoflixgit
+   git clone https://github.com/fReEsPiRiT-Spiritsoft/videoflix.git
    cd videoflix
    ```
 
