@@ -141,16 +141,11 @@ def logout_view(request):
         Response: 200 on successful logout, 400 if token missing or invalid.
     """
     refresh_token = request.COOKIES.get('refresh_token')
-    if not refresh_token:
-        return Response({'error': 'Refresh token missing.'}, 
-                       status=status.HTTP_400_BAD_REQUEST)
-    
-    if not blacklist_refresh_token(refresh_token):
-        return Response({'error': 'Invalid or expired token.'}, 
-                       status=status.HTTP_400_BAD_REQUEST)
-    
-    response = Response({'detail': 'Logout successful! All tokens will be deleted. Refresh token is now invalid.'}, 
-                       status=status.HTTP_200_OK)
+
+    if refresh_token:
+        blacklist_refresh_token(refresh_token)
+
+    response = Response({'detail': 'Logout successful.'}, status=status.HTTP_200_OK)
     response.delete_cookie('access_token')
     response.delete_cookie('refresh_token')
     return response
