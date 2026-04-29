@@ -197,39 +197,13 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 class PasswordResetConfirmSerializer(serializers.Serializer):
     """Serializer for confirming password reset.
     
-    Validates new password and confirms it matches confirmation field.
-    
     Fields:
-        password: New password (write-only, validated).
-        confirmed_password: Password confirmation (write-only).
+        new_password: New password (write-only, validated).
     """
     
-    password = serializers.CharField(
+    new_password = serializers.CharField(
         write_only=True,
         required=True,
         validators=[validate_password],
         style={'input_type': 'password'}
     )
-    confirmed_password = serializers.CharField(
-        write_only=True,
-        required=True,
-        style={'input_type': 'password'}
-    )
-    
-    def validate(self, attrs):
-        """Validate that passwords match.
-        
-        Args:
-            attrs: Dictionary containing password fields.
-            
-        Returns:
-            dict: Validated attributes.
-            
-        Raises:
-            ValidationError: If passwords don't match.
-        """
-        if attrs['password'] != attrs['confirmed_password']:
-            raise serializers.ValidationError({
-                "confirmed_password": "Passwords do not match."
-            })
-        return attrs
